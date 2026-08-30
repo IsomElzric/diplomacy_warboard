@@ -190,6 +190,52 @@ const defaultCountryBaseline = {
   },
 };
 
+const provinceToGrid = {
+  "Lon": [0, 0],
+  "Edi": [0, 1],
+  "Lvp": [0, 2],
+  "Yor": [1, 2],
+  "Wal": [1, 1],
+  "Cly": [0, 1],
+
+  "Par": [1, 3],
+  "Bre": [1, 2],
+  "Mar": [2, 3],
+  "Gas": [2, 2],
+  "Bur": [2, 4],
+
+  "Ber": [2, 5],
+  "Mun": [3, 5],
+  "Kie": [2, 4],
+  "Ruh": [3, 4],
+
+  "Rom": [4, 3],
+  "Ven": [3, 3],
+  "Nap": [4, 4],
+
+  "Vie": [3, 6],
+  "Bud": [4, 6],
+  "Tri": [4, 5],
+  "Gal": [3, 7],
+
+  "War": [2, 8],
+  "Mos": [2, 9],
+  "Stp": [1, 10],
+  "Sev": [3, 9],
+  "Ukr": [3, 8],
+
+  "Rum": [4, 7],
+  "Bul": [4, 8],
+  "Gre": [5, 7],
+  "Ser": [4, 6],
+
+  "Nwy": [1, 11],
+  "Swe": [2, 11],
+  "Den": [2, 10],
+  "Hol": [2, 3],
+  "Bel": [1, 3],
+};
+
 const emptyPayload = {
   selectedSeason: null,
   countries: defaultCountryBaseline,
@@ -390,14 +436,36 @@ const fallbackPayload = {
   },
 };
 
-const boardLayout = [
-  ['England', 'England', 'England', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral'],
-  ['England', 'England', 'France', 'France', 'France', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Russia', 'Russia'],
-  ['Neutral', 'France', 'France', 'Germany', 'Germany', 'Germany', 'Neutral', 'Neutral', 'Russia', 'Russia', 'Russia', 'Russia'],
-  ['Neutral', 'Neutral', 'Germany', 'Germany', 'Germany', 'Italy', 'Italy', 'Austria', 'Austria', 'Russia', 'Russia', 'Russia'],
-  ['Neutral', 'Neutral', 'Neutral', 'Italy', 'Italy', 'Italy', 'Austria', 'Austria', 'Austria', 'Turkey', 'Turkey', 'Turkey'],
-  ['Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Austria', 'Austria', 'Turkey', 'Turkey', 'Turkey', 'Turkey', 'Neutral'],
-];
+function buildDynamicBoard(payload) {
+  const rows = 6;
+  const cols = 12;
+  const dynamic = Array.from({ length: rows }, () =>
+    Array.from({ length: cols }, () => "Neutral")
+  );
+
+  const scOwners = payload.board?.scOwners ?? {};
+  const units = payload.board?.units ?? [];
+
+  // Paint SC ownership
+  for (const [province, owner] of Object.entries(scOwners)) {
+    const pos = provinceToGrid[province];
+    if (pos) {
+      const [r, c] = pos;
+      dynamic[r][c] = owner || "Neutral";
+    }
+  }
+
+  // Paint unit presence (units override SC ownership)
+  for (const unit of units) {
+    const pos = provinceToGrid[unit.province];
+    if (pos) {
+      const [r, c] = pos;
+      dynamic[r][c] = unit.country;
+    }
+  }
+
+  return dynamic;
+}
 
 const countryPalette = {
   England: 'english',
@@ -528,6 +596,28 @@ function buildSeasonOptions(payload) {
   state.selectedSeason = select.value || currentSelection;
 }
 
+function isConflictTile(r, c, dynamicBoard, selectedCountry) {
+  const deltas = [-1, 0, 1];
+
+  return deltas.some(dr =>
+    deltas.some(dc => {
+      if (dr === 0 && dc === 0) return false;
+      const nr = r + dr;
+      const nc = c + dc;
+      if (nr < 0 || nr >= dynamicBoard.length) return false;
+      if (nc < 0 || nc >= dynamicBoard[0].length) return false;
+
+      const neighborOwner = dynamicBoard[nr][nc];
+      return (
+        neighborOwner !== selectedCountry &&
+        neighborOwner !== "Neutral" &&
+        owner === selectedCountry
+      );
+    })
+  );
+}
+
+
 function renderWarboard(country) {
   const board = document.getElementById('warboard-grid');
   board.innerHTML = '';
@@ -537,6 +627,13 @@ function renderWarboard(country) {
 
   const isEnemyAdjacent = (rowIndex, colIndex, owner) => {
     if (!selectedCountry || owner === selectedCountry || owner === 'Neutral') return false;
+
+    if (owner === selectedCountry && isFrontTile(rowIndex, colIndex, dynamicBoard, selectedCountry)) {
+      tile.classList.add("front-zone");
+    }
+    if (isConflictTile(rowIndex, colIndex, dynamicBoard, selectedCountry)) {
+      tile.classList.add("conflict-zone");
+    }
 
     const deltas = [-1, 0, 1];
     return deltas.some((rowDelta) => deltas.some((colDelta) => {
@@ -552,7 +649,8 @@ function renderWarboard(country) {
 
   for (let rowIndex = 0; rowIndex < boardLayout.length; rowIndex += 1) {
     for (let colIndex = 0; colIndex < boardLayout[rowIndex].length; colIndex += 1) {
-      const owner = boardLayout[rowIndex][colIndex];
+      const dynamicBoard = buildDynamicBoard(state.payload);
+      const owner = dynamicBoard[rowIndex][colIndex];
       const tile = document.createElement('div');
       const tileName = owner === 'Neutral' ? 'Neutral' : owner;
       const isFriendly = !!selectedCountry && owner === selectedCountry;
@@ -575,14 +673,40 @@ function renderWarboard(country) {
         tile.classList.add('conflict-zone');
       }
 
-      const unitBadge = isFriendly && selectedUnits > 0
-        ? `<span class="unit-badge">${Math.min(9, Math.max(1, Math.round(selectedUnits / 2)))}</span>`
-        : '';
+      const unitHere = units.find(u => {
+        const pos = provinceToGrid[u.province];
+        return pos && pos[0] === rowIndex && pos[1] === colIndex;
+        });
+
+      const unitBadge = unitHere
+        ? `<span class="unit-badge">${unitHere.unit_type}</span>`
+        : "";
+
       const frontBadge = isConflict ? '<span class="front-badge">!</span>' : '';
       tile.innerHTML = `<span>${tileName}</span>${unitBadge}${frontBadge}<i class="center-dot"></i>`;
       board.appendChild(tile);
     }
   }
+}
+
+function isFrontTile(r, c, dynamicBoard, selectedCountry) {
+  const deltas = [-1, 0, 1];
+
+  return deltas.some(dr =>
+    deltas.some(dc => {
+      if (dr === 0 && dc === 0) return false;
+      const nr = r + dr;
+      const nc = c + dc;
+      if (nr < 0 || nr >= dynamicBoard.length) return false;
+      if (nc < 0 || nc >= dynamicBoard[0].length) return false;
+
+      const neighborOwner = dynamicBoard[nr][nc];
+      return (
+        neighborOwner !== selectedCountry &&
+        neighborOwner !== "Neutral"
+      );
+    })
+  );
 }
 
 function renderSummaryTable(payload) {

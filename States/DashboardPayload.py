@@ -67,4 +67,16 @@ class DashboardPayloadBuilder:
                 payload["countries"][country]["current"]["forecast_score"] = probability
                 payload["countries"][country]["current"]["win_probability"] = probability
 
+        payload["board"] = {
+            "units": [
+                {
+                    "country": unit.country,
+                    "unit_type": unit.unit_type,
+                    "province": unit.province,
+                }
+                for unit in game_state.board.units_by_province.values()
+            ],
+            "scOwners": game_state.board.sc_owners.copy(),
+        }
+
         return payload
