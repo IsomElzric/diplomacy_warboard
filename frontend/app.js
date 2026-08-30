@@ -460,11 +460,11 @@ function buildCountryOptions(payload) {
     return;
   }
 
-  select.innerHTML = countries.map(([country]) => `<option value="${country}">${country}</option>`).join('');
+  const validSelection = state.selectedCountry && payload?.countries?.[state.selectedCountry] ? state.selectedCountry : countries[0][0];
+  state.selectedCountry = validSelection;
 
-  const firstCountry = countries[0]?.[0];
-  state.selectedCountry = state.selectedCountry || firstCountry;
-  select.value = state.selectedCountry || firstCountry;
+  select.innerHTML = countries.map(([country]) => `<option value="${country}">${country}</option>`).join('');
+  select.value = validSelection;
 }
 
 function buildSeasonOptions(payload) {
@@ -478,12 +478,20 @@ function buildSeasonOptions(payload) {
     return;
   }
 
-  const seasons = [
-    { year: selectedSeason.year, season: selectedSeason.season },
-    { year: selectedSeason.year, season: selectedSeason.season === 'Spring' ? 'Fall' : selectedSeason.season === 'Fall' ? 'Winter' : 'Spring' },
-  ];
+  const seasonOrder = ['Spring', 'Fall', 'Winter'];
+  const currentIndex = seasonOrder.indexOf(selectedSeason.season);
+  const seasons = [];
 
-  select.innerHTML = seasons.map(({ year, season }) => `<option value="${year}|${season}">${formatSeason(year, season)}</option>`).join('');
+  for (let offset = -1; offset <= 1; offset += 1) {
+    const candidateIndex = currentIndex + offset;
+    if (candidateIndex < 0 || candidateIndex >= seasonOrder.length) continue;
+    const season = seasonOrder[candidateIndex];
+    seasons.push({ year: selectedSeason.year, season });
+  }
+
+  const uniqueSeasons = seasons.filter((entry, index, list) => index === list.findIndex((item) => item.year === entry.year && item.season === entry.season));
+
+  select.innerHTML = uniqueSeasons.map(({ year, season }) => `<option value="${year}|${season}">${formatSeason(year, season)}</option>`).join('');
   state.selectedSeason = `${selectedSeason.year}|${selectedSeason.season}`;
   select.value = state.selectedSeason;
 }
@@ -663,12 +671,17 @@ function renderDashboard(payload) {
     return;
   }
 
+  const activeCountry = state.selectedCountry && normalizedPayload.countries[state.selectedCountry]
+    ? state.selectedCountry
+    : Object.keys(normalizedPayload.countries)[0];
+  state.selectedCountry = activeCountry;
+
   renderSummaryTable(normalizedPayload);
   renderMomentumChart(normalizedPayload);
-  renderWarboard(state.selectedCountry || Object.keys(normalizedPayload.countries)[0]);
-  renderCountryFocus(state.selectedCountry || Object.keys(normalizedPayload.countries)[0], normalizedPayload);
-  renderCountryTrendChart(state.selectedCountry || Object.keys(normalizedPayload.countries)[0], normalizedPayload);
-  document.getElementById('season-header').textContent = formatSeason(season.year, season.season);
+  renderWarboard(activeCountry);
+  renderCountryFocus(activeCountry, normalizedPayload);
+  renderCountryTrendChart(activeCountry, normalizedPayload);
+  document.getElementById('season-header').textContent = season ? formatSeason(season.year, season.season) : 'No Season Loaded';
 }
 
 async function loadDashboardData() {
@@ -676,9 +689,11 @@ async function loadDashboardData() {
 
   document.getElementById('country-select').addEventListener('change', (event) => {
     state.selectedCountry = event.target.value;
-    renderWarboard(state.selectedCountry);
-    renderCountryFocus(state.selectedCountry, state.payload);
-    renderCountryTrendChart(state.selectedCountry, state.payload);
+    if (state.selectedCountry && state.payload?.countries?.[state.selectedCountry]) {
+      renderWarboard(state.selectedCountry);
+      renderCountryFocus(state.selectedCountry, state.payload);
+      renderCountryTrendChart(state.selectedCountry, state.payload);
+    }
   });
 
   document.getElementById('season-select').addEventListener('change', (event) => {
