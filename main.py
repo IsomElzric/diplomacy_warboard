@@ -9,6 +9,9 @@ from States.GameTimeline import GameTimeline
 from IO.ConsoleOutput import ConsoleOutput
 from Data.location_data import compute_country_geography_from_units
 from Data.supply_centers import reset_supply_centers
+from States.UnitState import UnitState
+from States.BoardState import BoardState
+from Engines.FrontMetricsEngine import FrontMetricsEngine
 
 
 def load_text(path):
@@ -83,69 +86,122 @@ def build_country_states(ownership, final_positions, year, season):
 
 def build_game_timeline(season_data):
     """
-    season_data: list of (year, season, text_block)
-    Example: [(1901, 'Spring', 'Austria\n...'), (1901, 'Fall', 'Austria\n...')]
+    season_data: list[(year, season, text_block)]
+    Fully board-aware refactor.
     """
+
     reset_supply_centers()
     timeline = GameTimeline()
-    previous_country_units = {}
+    metrics_engine = MetricsEngine()
+    front_engine = FrontMetricsEngine()
+
+    previous_board = None
+    previous_country_states = {}
 
     for year, season, text in season_data:
+
+        # --- 1. Parse orders ---
         parser = OrderParser()
         movement_orders, retreat_orders = parser.parse(text)
 
+        # --- 2. Adjudicate final positions ---
         final_positions = FinalPositionEngine().compute_final_positions(
             movement_orders,
             retreat_orders,
         )
 
-        ownership = SCOwnershipEngine().compute(final_positions, season=season)
-        country_states = build_country_states(
-            ownership,
-            final_positions,
-            year=year,
-            season=season,
-        )
+        # --- 3. Build new BoardState ---
+        board = BoardState(year, season)
 
-        country_position_counts = {}
-        for country_name in {state.country for state in country_states}:
-            country_position_counts[country_name] = sum(
-                1 for province, owner in final_positions.items() if owner == country_name
+        # SC ownership (Fall only)
+        ownership = SCOwnershipEngine().compute(final_positions, season)
+        sc_owners = {}
+        for owner, provinces in ownership.items():
+            for prov in provinces:
+                sc_owners[prov] = owner
+        board.sc_owners = sc_owners
+
+        # Units: one per occupied province, with order attached
+        for country, orders in movement_orders.items():
+            for o in orders:
+                # Determine final province of this unit
+                prov = o["to"] if o.get("success") and o.get("to") else o["from"]
+                if prov and final_positions.get(prov) == country:
+                    board.add_unit(UnitState(
+                        country=country,
+                        unit_type=o["unit"],
+                        province=prov,
+                        order=o
+                    ))
+
+        # --- 4. Build CountryState objects from board ---
+        country_states = []
+
+        for country in {owner for owner in sc_owners.values() if owner not in ("", "Neutral")}:
+
+            owned_scs = board.get_owned_scs_for_country(country)
+            units = board.get_units_for_country(country)
+
+            cs = CountryState(
+                country=country,
+                year=year,
+                season=season,
+                sc=len(owned_scs),
+                units=len(units),
+                builds=0,
             )
 
-        for state in country_states:
-            country_name = state.country
-            current_units = country_position_counts.get(country_name, state.units)
+            # Holds & supports from orders
+            orders = movement_orders.get(country, [])
+            cs.holds = sum(1 for o in orders if o.get("action") == "HOLD")
+            cs.supports = sum(1 for o in orders if o.get("action") == "SUPPORT")
 
-            if season.lower() == "winter":
+            # Geography metrics
+            hostile = [c for c in sc_owners.values() if c not in ("", "Neutral", country)]
+            geo = front_engine.compute(country, owned_scs, hostile)
+            cs.active_fronts = geo["active_fronts"]
+            cs.isolation = geo["isolation"]
+            cs.encirclement = geo["encirclement"]
+
+            country_states.append(cs)
+
+        # --- 5. Winter build/disband logic ---
+        if season.lower() == "winter":
+            for cs in country_states:
+                country = cs.country
+                orders = movement_orders.get(country, [])
+
                 build_count = sum(
-                    1 for order in movement_orders.get(country_name, [])
-                    if order.get("action") == "BUILD" and order.get("success")
+                    1 for o in orders
+                    if o.get("action") == "BUILD" and o.get("success")
                 )
                 disband_count = sum(
-                    1 for order in movement_orders.get(country_name, [])
-                    if order.get("action") == "DISBAND" and order.get("success")
+                    1 for o in orders
+                    if o.get("action") == "DISBAND" and o.get("success")
                 )
 
-                baseline_units = previous_country_units.get(country_name, current_units)
-                state.units = current_units if current_units is not None else max(0, baseline_units + build_count - disband_count)
-                state.builds = build_count
-                previous_country_units[country_name] = state.units
-            else:
-                state.units = current_units
-                state.builds = 0
-                previous_country_units[country_name] = state.units
+                prev_units = previous_country_states.get(country, cs.units)
+                cs.units = max(0, prev_units + build_count - disband_count)
+                cs.builds = build_count
 
+        # --- 6. Add to timeline ---
         timeline.add_season_states(year, season, country_states)
+        timeline.board_states[(year, season)] = board
 
-    metrics = MetricsEngine()
-    for country, country_timeline in timeline.country_timelines.items():
-        history = [snapshot.country_state for snapshot in country_timeline.snapshots]
-        if history:
-            metrics.compute_metrics_by_country(history)
+        # --- 7. Compute momentum/EMA/CGI using previous season ---
+        if previous_country_states:
+            histories = {
+                country: [previous_country_states[c], cs]
+                for cs in country_states
+                if (c := cs.country) in previous_country_states
+            }
+            metrics_engine.compute_metrics_by_country(histories)
+
+        # Update continuity
+        previous_board = board
+        previous_country_states = {cs.country: cs for cs in country_states}
 
     return timeline
-
 
 def main():
     text = load_text("1901s.txt")

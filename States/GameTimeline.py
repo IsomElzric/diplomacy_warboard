@@ -6,6 +6,7 @@ class GameTimeline:
         self.year = year
         self.season = season
         self.country_timelines = {}
+        self.board_states = {}  # (year, season) -> BoardState
 
     def add_country_state(self, country, state):
         timeline = self.country_timelines.setdefault(country, CountryTimeline(country))
@@ -35,6 +36,18 @@ class GameTimeline:
             if snapshot:
                 summary[country] = snapshot.country_state
         return summary
+
+    def get_board(self, year, season):
+        return self.board_states.get((year, season))
+
+    def has_season(self, year, season):
+        return (year, season) in self.board_states
+
+    def get_all_seasons(self):
+        return sorted(self.board_states.keys(), key=lambda x: (x[0], ["Spring","Summer","Fall","Winter"].index(x[1])))
+
+    def add_board_state(self, year, season, board_state):
+        self.board_states[(year, season)] = board_state
 
     def as_dict(self):
         return {

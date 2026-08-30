@@ -1,3 +1,6 @@
+from States.BoardState import BoardState
+
+
 class GameState:
     """
     Represents teh entire board for a single season.
@@ -8,6 +11,7 @@ class GameState:
         self.year = year
         self.season = season
         self.countries = {}
+        self.board = BoardState(year, season)
 
     def add_country_state(self, country_state):
         self.countries[country_state.country] = country_state
