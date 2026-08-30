@@ -39,6 +39,16 @@ class StartingUnitBaselineTests(unittest.TestCase):
         self.assertEqual(len(ownership["Germany"]), 3)
         self.assertEqual(len(ownership["Italy"]), 3)
 
+    def test_fall_ownership_updates_for_neutral_provinces_without_keyerror(self):
+        reset_supply_centers()
+        final_positions = {"Bel": "England"}
+
+        ownership = SCOwnershipEngine().compute(final_positions, season="Fall")
+
+        self.assertIn("England", ownership)
+        self.assertIn("Bel", ownership["England"])
+        self.assertNotIn("Bel", ownership["Neutral"])
+
 
 if __name__ == "__main__":
     unittest.main()

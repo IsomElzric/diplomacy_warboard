@@ -21,12 +21,16 @@ class SCOwnershipEngine:
             if province in SUPPLY_CENTERS:
                 prev_owner = SUPPLY_CENTERS[province]
 
-                if prev_owner is None:
-                    ownership["Neutral"].discard(province)
-                else:
+                if prev_owner in (None, "", "Neutral"):
+                    ownership.setdefault("Neutral", set()).discard(province)
+                elif prev_owner in ownership:
                     ownership[prev_owner].discard(province)
 
-                ownership.setdefault(country, set()).add(province)
-                SUPPLY_CENTERS[province] = country
+                if country in (None, "", "Neutral"):
+                    ownership.setdefault("Neutral", set()).add(province)
+                else:
+                    ownership.setdefault(country, set()).add(province)
+
+                SUPPLY_CENTERS[province] = country or "Neutral"
 
         return ownership
