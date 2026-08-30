@@ -105,13 +105,21 @@ def build_uploaded_payload(text, year=1901, season="Spring", mode="season"):
 def build_dashboard_payload(year=1901, season="Spring"):
     reset_supply_centers()
     if ACTIVE_GAME_TIMELINE is None:
-        return {"selectedSeason": None, "countries": {}}
+        return {"selectedSeason": None, "countries": {}, "availableSeasons": []}
 
     season_year = int(year) if year is not None else 1901
     season_name = season or "Spring"
     summary = ACTIVE_GAME_TIMELINE.get_season_summary(season_year, season_name)
     if not summary:
-        return {"selectedSeason": {"year": season_year, "season": season_name}, "countries": {}}
+        payload = {
+            "selectedSeason": {"year": season_year, "season": season_name},
+            "countries": {},
+            "availableSeasons": [],
+        }
+        for country, timeline in getattr(ACTIVE_GAME_TIMELINE, "country_timelines", {}).items():
+            for snapshot in timeline.snapshots:
+                payload["availableSeasons"].append({"year": snapshot.year, "season": snapshot.season})
+        return payload
 
     return DashboardPayloadBuilder.build(ACTIVE_GAME_TIMELINE, season_year, season_name)
 

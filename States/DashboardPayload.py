@@ -12,9 +12,23 @@ class DashboardPayloadBuilder:
         summary = game_timeline.get_season_summary(year, season)
         payload = {
             "selectedSeason": {"year": year, "season": season},
+            "availableSeasons": [],
             "countries": {},
             "forecast": {},
         }
+
+        seasons = set()
+        for country, state in summary.items():
+            seasons.add((state.year, state.season))
+
+        for country, timeline in game_timeline.country_timelines.items():
+            for snapshot in timeline.snapshots:
+                seasons.add((snapshot.year, snapshot.season))
+
+        payload["availableSeasons"] = [
+            {"year": year_value, "season": season_name}
+            for year_value, season_name in sorted(seasons, key=lambda item: (item[0], ["Spring", "Summer", "Fall", "Winter"].index(item[1]) if item[1] in ["Spring", "Summer", "Fall", "Winter"] else 99))
+        ]
 
         for country, state in summary.items():
             timeline = game_timeline.get_country_timeline(country)

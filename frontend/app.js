@@ -433,6 +433,42 @@ function getCountryEntries(payload) {
   return Object.entries(payload?.countries ?? {});
 }
 
+function getAvailableSeasons(payload) {
+  const seasonOrder = ['Spring', 'Summer', 'Fall', 'Winter'];
+  const byKey = new Map();
+
+  const pushSeason = (year, season) => {
+    const normalizedYear = Number(year);
+    const normalizedSeason = String(season || '').trim();
+    if (!normalizedYear || !normalizedSeason) return;
+    const key = `${normalizedYear}|${normalizedSeason}`;
+    if (!byKey.has(key)) {
+      byKey.set(key, { year: normalizedYear, season: normalizedSeason });
+    }
+  };
+
+  (payload?.availableSeasons ?? []).forEach((entry) => {
+    if (entry && entry.year != null && entry.season) {
+      pushSeason(entry.year, entry.season);
+    }
+  });
+
+  getCountryEntries(payload).forEach(([, data]) => {
+    (data?.history ?? []).forEach((entry) => {
+      pushSeason(entry?.year, entry?.season);
+    });
+  });
+
+  if (payload?.selectedSeason) {
+    pushSeason(payload.selectedSeason.year, payload.selectedSeason.season);
+  }
+
+  return Array.from(byKey.values()).sort((a, b) => {
+    if (a.year !== b.year) return a.year - b.year;
+    return seasonOrder.indexOf(a.season) - seasonOrder.indexOf(b.season);
+  });
+}
+
 function getCountryHistory(country, payload) {
   const entry = payload?.countries?.[country];
   return entry?.history ?? [];
@@ -460,7 +496,9 @@ function buildCountryOptions(payload) {
     return;
   }
 
-  const validSelection = state.selectedCountry && payload?.countries?.[state.selectedCountry] ? state.selectedCountry : countries[0][0];
+  const validSelection = state.selectedCountry && payload?.countries?.[state.selectedCountry]
+    ? state.selectedCountry
+    : countries[0][0];
   state.selectedCountry = validSelection;
 
   select.innerHTML = countries.map(([country]) => `<option value="${country}">${country}</option>`).join('');
@@ -469,31 +507,25 @@ function buildCountryOptions(payload) {
 
 function buildSeasonOptions(payload) {
   const select = document.getElementById('season-select');
-  const selectedSeason = payload?.selectedSeason ?? null;
+  const seasons = getAvailableSeasons(payload);
 
-  if (!selectedSeason) {
+  if (!seasons.length) {
     select.innerHTML = '<option value="">Load orders to choose a season</option>';
     state.selectedSeason = null;
     select.value = '';
     return;
   }
 
-  const seasonOrder = ['Spring', 'Fall', 'Winter'];
-  const currentIndex = seasonOrder.indexOf(selectedSeason.season);
-  const seasons = [];
+  const currentSelection = payload?.selectedSeason
+    ? `${payload.selectedSeason.year}|${payload.selectedSeason.season}`
+    : `${seasons[0].year}|${seasons[0].season}`;
 
-  for (let offset = -1; offset <= 1; offset += 1) {
-    const candidateIndex = currentIndex + offset;
-    if (candidateIndex < 0 || candidateIndex >= seasonOrder.length) continue;
-    const season = seasonOrder[candidateIndex];
-    seasons.push({ year: selectedSeason.year, season });
-  }
-
-  const uniqueSeasons = seasons.filter((entry, index, list) => index === list.findIndex((item) => item.year === entry.year && item.season === entry.season));
-
-  select.innerHTML = uniqueSeasons.map(({ year, season }) => `<option value="${year}|${season}">${formatSeason(year, season)}</option>`).join('');
-  state.selectedSeason = `${selectedSeason.year}|${selectedSeason.season}`;
-  select.value = state.selectedSeason;
+  state.selectedSeason = currentSelection;
+  select.innerHTML = seasons.map(({ year, season }) => `<option value="${year}|${season}">${formatSeason(year, season)}</option>`).join('');
+  select.value = seasons.some(({ year, season }) => `${year}|${season}` === currentSelection)
+    ? currentSelection
+    : `${seasons[0].year}|${seasons[0].season}`;
+  state.selectedSeason = select.value || currentSelection;
 }
 
 function renderWarboard(country) {
@@ -603,6 +635,10 @@ function computeProjectedWinChance(country, payload) {
   const current = payload?.countries?.[country]?.current ?? {};
   const score = Number(current.forecast_score ?? current.momentum ?? 0);
   return round((score / total) * 100, 1);
+}
+
+function getProjectedWinChance(country, payload) {
+  return computeProjectedWinChance(country, payload);
 }
 
 function getProjectedLeader(payload) {
@@ -826,6 +862,11 @@ function renderDashboard(payload) {
   const normalizedPayload = payload && payload.countries ? payload : emptyPayload;
   const season = normalizedPayload?.selectedSeason ?? null;
   state.payload = normalizedPayload;
+
+  if (state.selectedCountry && !normalizedPayload.countries?.[state.selectedCountry]) {
+    state.selectedCountry = null;
+  }
+
   buildSeasonOptions(normalizedPayload);
   buildCountryOptions(normalizedPayload);
 
