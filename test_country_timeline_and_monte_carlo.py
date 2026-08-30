@@ -100,6 +100,40 @@ class CountryTimelineAndMonteCarloTests(unittest.TestCase):
         self.assertGreaterEqual(forecast["England"], 0)
         self.assertLessEqual(forecast["England"], 1)
 
+    def test_monte_carlo_uses_strategic_state_not_just_sc(self):
+        game = GameState(1901, "Spring")
+
+        england = CountryState("England", sc=7, units=7)
+        england.momentum = 4
+        england.ema_momentum = 2.5
+        england.cgi = 2.1
+        england.active_fronts = 4
+        england.holds = 6
+        england.supports = 5
+        england.isolation = 0.2
+        england.encirclement = 0.3
+        england.growth_rate = 1.1
+        england.unit_growth = 2
+        england.build_effeciency = 0.5
+        game.add_country_state(england)
+
+        france = CountryState("France", sc=3, units=3)
+        france.momentum = 0.5
+        france.ema_momentum = 0.2
+        france.cgi = 0.2
+        france.active_fronts = 1
+        france.holds = 1
+        france.supports = 1
+        france.isolation = 1.2
+        france.encirclement = 1.0
+        france.growth_rate = 0.1
+        france.unit_growth = 0
+        france.build_effeciency = 0.1
+        game.add_country_state(france)
+
+        forecast = MonteCarloEngine().simulate(game, iterations=2000)
+        self.assertGreater(forecast["England"], forecast["France"])
+
 
 if __name__ == "__main__":
     unittest.main()

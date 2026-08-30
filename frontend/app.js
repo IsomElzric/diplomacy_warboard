@@ -590,12 +590,189 @@ function renderCountryTrendChart(country, payload) {
 }
 
 function computeProjectedWinChance(country, payload) {
+  if (!payload) return 0;
+
+  const mcChance = Number(payload?.forecast?.[country] ?? payload?.countries?.[country]?.current?.win_probability ?? 0);
+  if (mcChance > 0) {
+    return round(mcChance * 100, 1);
+  }
+
   const entries = getCountryEntries(payload);
   const scores = entries.map(([, data]) => Number(data?.current?.forecast_score ?? data?.current?.momentum ?? 0));
   const total = scores.reduce((sum, value) => sum + value, 0) || 1;
   const current = payload?.countries?.[country]?.current ?? {};
   const score = Number(current.forecast_score ?? current.momentum ?? 0);
   return round((score / total) * 100, 1);
+}
+
+function getProjectedLeader(payload) {
+  const countries = getCountryEntries(payload);
+  if (!countries.length) return null;
+
+  return countries
+    .map(([country, data]) => {
+      const current = data.current ?? {};
+      const mcWin = Number(payload?.forecast?.[country] ?? current?.win_probability ?? 0);
+      const strategicScore = (
+        (mcWin * 100) +
+        (Number(current.cgi ?? 0) * 2.5) +
+        (Number(current.ema_momentum ?? 0) * 1.8) +
+        (Number(current.sc ?? 0) * 1.7) +
+        (Number(current.momentum ?? 0) * 1.4) +
+        (Number(current.holds ?? 0) * 0.8) +
+        (Number(current.supports ?? 0) * 0.9) +
+        (Number(current.active_fronts ?? 0) * 0.6) -
+        (Number(current.isolation ?? 0) * 1.5) -
+        (Number(current.encirclement ?? 0) * 1.7)
+      );
+
+      return {
+        country,
+        score: strategicScore,
+        sc: Number(current.sc ?? 0),
+        units: Number(current.units ?? 0),
+        ema: Number(current.ema_momentum ?? 0),
+        cgi: Number(current.cgi ?? 0),
+        momentum: Number(current.momentum ?? 0),
+        activeFronts: Number(current.active_fronts ?? 0),
+        isolation: Number(current.isolation ?? 0),
+        encirclement: Number(current.encirclement ?? 0),
+        holds: Number(current.holds ?? 0),
+        supports: Number(current.supports ?? 0),
+      };
+    })
+    .sort((a, b) => b.score - a.score)[0];
+}
+
+function renderGlobalOverview(payload) {
+  const countries = getCountryEntries(payload);
+  const overviewFronts = document.getElementById('overview-fronts');
+  const overviewIsolation = document.getElementById('overview-isolation');
+  const overviewEncirclement = document.getElementById('overview-encirclement');
+  const overviewHolds = document.getElementById('overview-holds');
+  const overviewSupports = document.getElementById('overview-supports');
+  const overviewMomentum = document.getElementById('overview-momentum');
+  const overviewFactors = document.getElementById('overview-factors');
+
+  if (!countries.length) {
+    overviewFronts.textContent = '0';
+    overviewIsolation.textContent = '0.00';
+    overviewEncirclement.textContent = '0.00';
+    overviewHolds.textContent = '0';
+    overviewSupports.textContent = '0';
+    overviewMomentum.textContent = '0.00';
+    overviewFactors.innerHTML = '';
+    return;
+  }
+
+  const totals = countries.reduce((acc, [, data]) => {
+    const current = data.current ?? {};
+    acc.fronts += Number(current.active_fronts ?? 0);
+    acc.isolation += Number(current.isolation ?? 0);
+    acc.encirclement += Number(current.encirclement ?? 0);
+    acc.holds += Number(current.holds ?? 0);
+    acc.supports += Number(current.supports ?? 0);
+    acc.momentum += Number(current.momentum ?? 0);
+    return acc;
+  }, { fronts: 0, isolation: 0, encirclement: 0, holds: 0, supports: 0, momentum: 0 });
+
+  const leader = getProjectedLeader(payload);
+  const avgFronts = countries.length ? totals.fronts / countries.length : 0;
+  const avgIsolation = countries.length ? totals.isolation / countries.length : 0;
+  const avgEncirclement = countries.length ? totals.encirclement / countries.length : 0;
+  const avgMomentum = countries.length ? totals.momentum / countries.length : 0;
+
+  overviewFronts.textContent = round(avgFronts, 1);
+  overviewIsolation.textContent = round(avgIsolation, 2);
+  overviewEncirclement.textContent = round(avgEncirclement, 2);
+  overviewHolds.textContent = totals.holds;
+  overviewSupports.textContent = totals.supports;
+  overviewMomentum.textContent = round(avgMomentum, 2);
+
+  const mostIsolated = countries
+    .map(([country, data]) => ({ country, value: Number(data.current?.isolation ?? 0) }))
+    .sort((a, b) => b.value - a.value)[0];
+  const mostPressed = countries
+    .map(([country, data]) => ({ country, value: Number(data.current?.active_fronts ?? 0) }))
+    .sort((a, b) => b.value - a.value)[0];
+
+  overviewFactors.innerHTML = `
+    <div class="overview-factor">
+      <strong>Front pressure</strong>
+      ${mostPressed ? `${mostPressed.country} is fighting on ${mostPressed.value} fronts, driving the broadest operational footprint.` : 'No active fronts recorded.'}
+    </div>
+    <div class="overview-factor">
+      <strong>Exposure</strong>
+      ${mostIsolated ? `${mostIsolated.country} carries the highest isolation index at ${round(mostIsolated.value, 2)}, which raises strategic vulnerability.` : 'No isolation data available.'}
+    </div>
+    <div class="overview-factor">
+      <strong>Leader</strong>
+      ${leader ? `${leader.country} remains the model favorite with ${round(getProjectedWinChance(leader.country, payload), 0)}% confidence and ${leader.sc} centers.` : 'No leader available.'}
+    </div>
+    <div class="overview-factor">
+      <strong>Operational tempo</strong>
+      ${leader ? `${leader.country} is sustaining ${round(leader.ema, 2)} EMA momentum alongside ${leader.holds} holds and ${leader.supports} supports.` : 'No operational tempo available.'}
+    </div>
+  `;
+}
+
+function renderIntelPanel(payload) {
+  const leader = getProjectedLeader(payload);
+  const selectedCountry = state.selectedCountry && payload?.countries?.[state.selectedCountry]
+    ? state.selectedCountry
+    : (payload && Object.keys(payload.countries || {})[0]) || null;
+
+  const intelCountry = document.getElementById('intel-country');
+  const intelConfidence = document.getElementById('intel-confidence');
+  const intelSummary = document.getElementById('intel-summary');
+  const intelFactors = document.getElementById('intel-factors');
+  const intelAdvice = document.getElementById('intel-advice');
+
+  if (!leader || !payload || !Object.keys(payload.countries || {}).length) {
+    intelCountry.textContent = '—';
+    intelConfidence.textContent = '0%';
+    intelSummary.textContent = 'No data available yet.';
+    intelFactors.innerHTML = '';
+    intelAdvice.textContent = 'No country selected.';
+    return;
+  }
+
+  const confidence = computeProjectedWinChance(leader.country, payload);
+  const selectedState = selectedCountry ? (payload.countries[selectedCountry]?.current ?? {}) : {};
+
+  const leadingFactors = [
+    `${leader.country} controls ${leader.sc} supply centers and is fielding ${leader.units} units, giving it the strongest raw center base in the current board state.`,
+    `EMA momentum is ${formatNumber(leader.ema)}, CGI is ${formatNumber(leader.cgi)}, and momentum sits at ${formatNumber(leader.momentum)}, showing a durable trend rather than a one-off gain.`,
+    `They are fighting on ${leader.activeFronts} fronts with ${leader.holds} holds and ${leader.supports} supports, while their isolation and encirclement are comparatively contained at ${formatNumber(leader.isolation)} and ${formatNumber(leader.encirclement)}.`,
+  ];
+
+  intelCountry.textContent = leader.country;
+  intelConfidence.textContent = `${round(confidence, 0)}%`;
+  intelSummary.textContent = `${leader.country} is the model favorite to win with ${round(confidence, 0)}% confidence. The combination of a stronger center count, more durable momentum, higher EMA and CGI, and manageable exposure suggests they are converting strategic advantage into a harder-to-stop position.`;
+  intelFactors.innerHTML = leadingFactors.map((factor) => `<li>${factor}</li>`).join('');
+
+  if (!selectedCountry) {
+    intelAdvice.textContent = 'No country selected.';
+    return;
+  }
+
+  const selectedName = selectedCountry;
+  const selectedMomentum = Number(selectedState.momentum ?? 0);
+  const selectedEma = Number(selectedState.ema_momentum ?? 0);
+  const selectedSc = Number(selectedState.sc ?? 0);
+  const selectedCgi = Number(selectedState.cgi ?? 0);
+  const selectedIsolation = Number(selectedState.isolation ?? 0);
+  const selectedEncirclement = Number(selectedState.encirclement ?? 0);
+  const selectedHolds = Number(selectedState.holds ?? 0);
+  const selectedSupports = Number(selectedState.supports ?? 0);
+
+  if (selectedName === leader.country) {
+    intelAdvice.textContent = `${selectedName} is in the strongest position. To stay ahead, keep converting center gains into sustained pressure, preserve high support rates, and avoid letting isolation or encirclement drift upward enough to compromise the position.`;
+    return;
+  }
+
+  const gapText = selectedSc >= leader.sc ? 'close the center-count gap' : 'keep the center-count gap from widening';
+  intelAdvice.textContent = `${selectedName} needs to ${gapText}, reduce isolation from ${formatNumber(selectedIsolation)} and encirclement from ${formatNumber(selectedEncirclement)}, and improve its operational support profile from ${selectedHolds} holds and ${selectedSupports} supports so it can recover momentum and challenge ${leader.country} before the lead hardens.`;
 }
 
 function renderCountryFocus(country, payload) {
@@ -681,6 +858,8 @@ function renderDashboard(payload) {
   renderWarboard(activeCountry);
   renderCountryFocus(activeCountry, normalizedPayload);
   renderCountryTrendChart(activeCountry, normalizedPayload);
+  renderGlobalOverview(normalizedPayload);
+  renderIntelPanel(normalizedPayload);
   document.getElementById('season-header').textContent = season ? formatSeason(season.year, season.season) : 'No Season Loaded';
 }
 
@@ -693,6 +872,7 @@ async function loadDashboardData() {
       renderWarboard(state.selectedCountry);
       renderCountryFocus(state.selectedCountry, state.payload);
       renderCountryTrendChart(state.selectedCountry, state.payload);
+      renderIntelPanel(state.payload);
     }
   });
 
@@ -753,6 +933,7 @@ async function submitUploadedOrders() {
     }
 
     status.classList.remove('error');
+    document.getElementById('upload-text').value = '';
     renderDashboard(payload);
     const seasonLabel = payload?.selectedSeason ? `${payload.selectedSeason.season} ${payload.selectedSeason.year}` : `${season} ${year}`;
     status.textContent = `Loaded orders for ${seasonLabel}.`;
@@ -767,6 +948,8 @@ function bindUploadControls() {
   const uploadMode = document.getElementById('upload-mode');
   const uploadYear = document.getElementById('upload-year');
   const uploadSeason = document.getElementById('upload-season');
+  const uploadPanel = document.getElementById('upload-panel');
+  const uploadToggle = document.getElementById('upload-panel-toggle');
 
   uploadMode.addEventListener('change', () => {
     const isFullGame = uploadMode.value === 'full';
@@ -774,7 +957,13 @@ function bindUploadControls() {
     uploadSeason.disabled = isFullGame;
   });
 
+  uploadToggle.addEventListener('click', () => {
+    uploadPanel.classList.toggle('collapsed');
+  });
+
   document.getElementById('upload-submit').addEventListener('click', submitUploadedOrders);
+
+  uploadPanel.classList.add('collapsed');
 }
 
 document.addEventListener('DOMContentLoaded', () => {

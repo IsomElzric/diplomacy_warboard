@@ -41,6 +41,16 @@ A Par - Bur  SUCCEEDS
         self.assertEqual(states[0].ema_momentum, 0)
         self.assertEqual(states[1].ema_momentum, 0)
 
+    def test_metrics_are_calculated_across_a_country_history(self):
+        spring = CountryState("England", year=1901, season="Spring", sc=3, units=3)
+        fall = CountryState("England", year=1901, season="Fall", sc=4, units=4)
+
+        MetricsEngine().compute_metrics_by_country([spring, fall])
+
+        self.assertGreater(fall.momentum, 0)
+        self.assertGreater(fall.ema_momentum, 0)
+        self.assertGreater(fall.cgi, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

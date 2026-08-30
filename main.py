@@ -106,10 +106,13 @@ def build_game_timeline(season_data):
             season=season,
         )
 
-        metrics = MetricsEngine()
-        metrics.compute_metrics(country_states)
-
         timeline.add_season_states(year, season, country_states)
+
+    metrics = MetricsEngine()
+    for country, country_timeline in timeline.country_timelines.items():
+        history = [snapshot.country_state for snapshot in country_timeline.snapshots]
+        if history:
+            metrics.compute_metrics_by_country(history)
 
     return timeline
 

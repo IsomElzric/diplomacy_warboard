@@ -24,47 +24,50 @@
           <select id="country-select"></select>
         </div>
 
-        <section class="upload-panel">
-          <div class="section-heading compact-heading">
+        <section class="upload-panel" id="upload-panel">
+          <div class="section-heading compact-heading upload-panel-header" id="upload-panel-toggle">
             <div>
               <p class="mini-label">Order Intake</p>
-              <h3>Upload Orders</h3>
+              <h3>Order Intake</h3>
             </div>
+            <button type="button" class="collapse-toggle" aria-label="Toggle order intake panel">▾</button>
           </div>
 
-          <div class="control-block compact">
-            <label for="upload-mode">Mode</label>
-            <select id="upload-mode">
-              <option value="season">Single Season</option>
-              <option value="full">Full Game</option>
-            </select>
-          </div>
-
-          <div class="inline-fields">
+          <div class="upload-panel-body">
             <div class="control-block compact">
-              <label for="upload-year">Year</label>
-              <input id="upload-year" type="number" min="1901" max="2000" value="1901" />
-            </div>
-            <div class="control-block compact">
-              <label for="upload-season">Season</label>
-              <select id="upload-season">
-                <option value="Spring">Spring</option>
-                <option value="Fall">Fall</option>
-                <option value="Winter">Winter</option>
+              <label for="upload-mode">Mode</label>
+              <select id="upload-mode">
+                <option value="season">Single Season</option>
+                <option value="full">Full Game</option>
               </select>
             </div>
-          </div>
 
-          <div class="control-block compact">
-            <label for="upload-text">Order Text</label>
-            <textarea id="upload-text" rows="10" placeholder="England
+            <div class="inline-fields">
+              <div class="control-block compact">
+                <label for="upload-year">Year</label>
+                <input id="upload-year" type="number" min="1901" max="2000" value="1901" />
+              </div>
+              <div class="control-block compact">
+                <label for="upload-season">Season</label>
+                <select id="upload-season">
+                  <option value="Spring">Spring</option>
+                  <option value="Fall">Fall</option>
+                  <option value="Winter">Winter</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="control-block compact">
+              <label for="upload-text">Order Text</label>
+              <textarea id="upload-text" rows="10" placeholder="England
 F Edi - NTH SUCCEEDS
 A Lvp - Yor SUCCEEDS
 ..."></textarea>
-          </div>
+            </div>
 
-          <button id="upload-submit" type="button">Load Orders</button>
-          <div id="upload-status" class="upload-status">Waiting for orders.</div>
+            <button id="upload-submit" type="button">Load Orders</button>
+            <div id="upload-status" class="upload-status">Waiting for orders.</div>
+          </div>
         </section>
 
         <section class="country-focus">
@@ -115,6 +118,36 @@ A Lvp - Yor SUCCEEDS
           </div>
         </section>
 
+        <section class="intel-box">
+          <div class="section-heading">
+            <p class="mini-label">Command Intel</p>
+            <h3>Projected Leader</h3>
+          </div>
+
+          <div class="intel-topline">
+            <div>
+              <p class="intel-label">Estimated winner</p>
+              <h4 id="intel-country">—</h4>
+            </div>
+            <div class="intel-confidence-wrap">
+              <span>Confidence</span>
+              <strong id="intel-confidence">0%</strong>
+            </div>
+          </div>
+
+          <p id="intel-summary" class="intel-summary">No data available yet.</p>
+
+          <div class="intel-factors">
+            <p class="mini-label">Leading factors</p>
+            <ul id="intel-factors"></ul>
+          </div>
+
+          <div class="intel-advice">
+            <p class="mini-label">On the selected country</p>
+            <p id="intel-advice">No country selected.</p>
+          </div>
+        </section>
+
         <section class="timeline-box">
           <div class="section-heading">
             <p class="mini-label">Trend Overview</p>
@@ -131,6 +164,42 @@ A Lvp - Yor SUCCEEDS
             <h2 id="season-header">Spring 1901</h2>
           </div>
         </header>
+
+        <section class="panel-card strategic-overview">
+          <div class="section-heading">
+            <p class="mini-label">Global Overview</p>
+            <h3>Strategic Picture</h3>
+          </div>
+
+          <div class="overview-grid">
+            <div class="overview-stat">
+              <span>Avg. Fronts</span>
+              <strong id="overview-fronts">0</strong>
+            </div>
+            <div class="overview-stat">
+              <span>Avg. Isolation</span>
+              <strong id="overview-isolation">0.00</strong>
+            </div>
+            <div class="overview-stat">
+              <span>Avg. Encirclement</span>
+              <strong id="overview-encirclement">0.00</strong>
+            </div>
+            <div class="overview-stat">
+              <span>Total Holds</span>
+              <strong id="overview-holds">0</strong>
+            </div>
+            <div class="overview-stat">
+              <span>Total Supports</span>
+              <strong id="overview-supports">0</strong>
+            </div>
+            <div class="overview-stat">
+              <span>Avg. Momentum</span>
+              <strong id="overview-momentum">0.00</strong>
+            </div>
+          </div>
+
+          <div id="overview-factors" class="overview-factors"></div>
+        </section>
 
         <section class="warboard-panel panel-card">
           <div class="section-heading compact-heading">
