@@ -599,8 +599,8 @@ function buildSeasonOptions(payload) {
 function isConflictTile(r, c, dynamicBoard, selectedCountry) {
   const deltas = [-1, 0, 1];
 
-  return deltas.some(dr =>
-    deltas.some(dc => {
+  return deltas.some((dr) =>
+    deltas.some((dc) => {
       if (dr === 0 && dc === 0) return false;
       const nr = r + dr;
       const nc = c + dc;
@@ -608,58 +608,42 @@ function isConflictTile(r, c, dynamicBoard, selectedCountry) {
       if (nc < 0 || nc >= dynamicBoard[0].length) return false;
 
       const neighborOwner = dynamicBoard[nr][nc];
-      return (
-        neighborOwner !== selectedCountry &&
-        neighborOwner !== "Neutral" &&
-        owner === selectedCountry
-      );
+      return neighborOwner && neighborOwner !== selectedCountry && neighborOwner !== 'Neutral';
     })
   );
 }
-
 
 function renderWarboard(country) {
   const board = document.getElementById('warboard-grid');
   board.innerHTML = '';
 
+  const dynamicBoard = buildDynamicBoard(state.payload);
   const selectedCountry = country || state.selectedCountry;
   const selectedUnits = Number(state.payload?.countries?.[selectedCountry]?.current?.units ?? 0);
+  const units = state.payload?.board?.units ?? [];
 
   const isEnemyAdjacent = (rowIndex, colIndex, owner) => {
     if (!selectedCountry || owner === selectedCountry || owner === 'Neutral') return false;
-
-    if (owner === selectedCountry && isFrontTile(rowIndex, colIndex, dynamicBoard, selectedCountry)) {
-      tile.classList.add("front-zone");
-    }
-    if (isConflictTile(rowIndex, colIndex, dynamicBoard, selectedCountry)) {
-      tile.classList.add("conflict-zone");
-    }
 
     const deltas = [-1, 0, 1];
     return deltas.some((rowDelta) => deltas.some((colDelta) => {
       if (rowDelta === 0 && colDelta === 0) return false;
       const nextRow = rowIndex + rowDelta;
       const nextCol = colIndex + colDelta;
-      if (nextRow < 0 || nextRow >= boardLayout.length || nextCol < 0 || nextCol >= boardLayout[nextRow].length) {
+      if (nextRow < 0 || nextRow >= dynamicBoard.length || nextCol < 0 || nextCol >= dynamicBoard[nextRow].length) {
         return false;
       }
-      return boardLayout[nextRow][nextCol] === selectedCountry;
+      return dynamicBoard[nextRow][nextCol] === selectedCountry;
     }));
   };
 
-  for (let rowIndex = 0; rowIndex < boardLayout.length; rowIndex += 1) {
-    for (let colIndex = 0; colIndex < boardLayout[rowIndex].length; colIndex += 1) {
-      const dynamicBoard = buildDynamicBoard(state.payload);
+  for (let rowIndex = 0; rowIndex < dynamicBoard.length; rowIndex += 1) {
+    for (let colIndex = 0; colIndex < dynamicBoard[rowIndex].length; colIndex += 1) {
       const owner = dynamicBoard[rowIndex][colIndex];
       const tile = document.createElement('div');
       const tileName = owner === 'Neutral' ? 'Neutral' : owner;
       const isFriendly = !!selectedCountry && owner === selectedCountry;
-      const isFront = !!selectedCountry && isFriendly && (
-        rowIndex > 0 && boardLayout[rowIndex - 1][colIndex] && boardLayout[rowIndex - 1][colIndex] !== selectedCountry && boardLayout[rowIndex - 1][colIndex] !== 'Neutral'
-        || rowIndex < boardLayout.length - 1 && boardLayout[rowIndex + 1][colIndex] && boardLayout[rowIndex + 1][colIndex] !== selectedCountry && boardLayout[rowIndex + 1][colIndex] !== 'Neutral'
-        || colIndex > 0 && boardLayout[rowIndex][colIndex - 1] && boardLayout[rowIndex][colIndex - 1] !== selectedCountry && boardLayout[rowIndex][colIndex - 1] !== 'Neutral'
-        || colIndex < boardLayout[rowIndex].length - 1 && boardLayout[rowIndex][colIndex + 1] && boardLayout[rowIndex][colIndex + 1] !== selectedCountry && boardLayout[rowIndex][colIndex + 1] !== 'Neutral'
-      );
+      const isFront = !!selectedCountry && isFriendly && isFrontTile(rowIndex, colIndex, dynamicBoard, selectedCountry);
       const isConflict = !!selectedCountry && isEnemyAdjacent(rowIndex, colIndex, owner);
 
       tile.className = `province-tile ${countryPalette[owner] ?? 'neutral'}`;
@@ -673,14 +657,14 @@ function renderWarboard(country) {
         tile.classList.add('conflict-zone');
       }
 
-      const unitHere = units.find(u => {
+      const unitHere = units.find((u) => {
         const pos = provinceToGrid[u.province];
         return pos && pos[0] === rowIndex && pos[1] === colIndex;
-        });
+      });
 
       const unitBadge = unitHere
         ? `<span class="unit-badge">${unitHere.unit_type}</span>`
-        : "";
+        : '';
 
       const frontBadge = isConflict ? '<span class="front-badge">!</span>' : '';
       tile.innerHTML = `<span>${tileName}</span>${unitBadge}${frontBadge}<i class="center-dot"></i>`;
@@ -692,8 +676,8 @@ function renderWarboard(country) {
 function isFrontTile(r, c, dynamicBoard, selectedCountry) {
   const deltas = [-1, 0, 1];
 
-  return deltas.some(dr =>
-    deltas.some(dc => {
+  return deltas.some((dr) =>
+    deltas.some((dc) => {
       if (dr === 0 && dc === 0) return false;
       const nr = r + dr;
       const nc = c + dc;
@@ -701,10 +685,7 @@ function isFrontTile(r, c, dynamicBoard, selectedCountry) {
       if (nc < 0 || nc >= dynamicBoard[0].length) return false;
 
       const neighborOwner = dynamicBoard[nr][nc];
-      return (
-        neighborOwner !== selectedCountry &&
-        neighborOwner !== "Neutral"
-      );
+      return neighborOwner && neighborOwner !== selectedCountry && neighborOwner !== 'Neutral';
     })
   );
 }

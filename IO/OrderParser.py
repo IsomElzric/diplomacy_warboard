@@ -68,6 +68,21 @@ class OrderParser:
                     movement.setdefault(current_country, [])
                 continue
 
+            winter = self.WINTER_ORDER_LINE.match(line)
+            if winter and current_country:
+                entry = winter.groupdict()
+                entry["action"] = entry["action"].upper()
+                entry["to"] = None
+                entry["success"] = entry["result"] == "SUCCEEDS"
+                entry["dislodged"] = False
+                entry["dislodged_by"] = None
+
+                if retreat_mode:
+                    retreats[current_country].append(entry)
+                else:
+                    movement[current_country].append(entry)
+                continue
+
             # Order line
             m = self.ORDER_LINE.match(line)
             if m and current_country:
@@ -109,19 +124,5 @@ class OrderParser:
                 else:
                     movement[current_country].append(entry)
                 continue
-
-            winter = self.WINTER_ORDER_LINE.match(line)
-            if winter and current_country:
-                entry = winter.groupdict()
-                entry["action"] = entry["action"].upper()
-                entry["to"] = None
-                entry["success"] = entry["result"] == "SUCCEEDS"
-                entry["dislodged"] = False
-                entry["dislodged_by"] = None
-
-                if retreat_mode:
-                    retreats[current_country].append(entry)
-                else:
-                    movement[current_country].append(entry)
 
         return movement, retreats

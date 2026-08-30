@@ -181,9 +181,8 @@ def build_game_timeline(season_data):
                 )
 
                 prev_state = previous_country_states.get(country_name)
-                prev_units = prev_state.units if prev_state else cs.units
-
-                cs.units = max(0, prev_units + build_count - disband_count)
+                base_units = prev_state.units if prev_state else len(board.get_units_for_country(country_name))
+                cs.units = max(0, base_units + build_count - disband_count)
                 cs.builds = build_count
 
         # --- 6. Add to timeline ---
