@@ -1,4 +1,5 @@
 import json
+import mimetypes
 import os
 import re
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
@@ -102,6 +103,23 @@ class DashboardHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, directory=str(FRONTEND_DIR), **kwargs):
         super().__init__(*args, directory=directory, **kwargs)
 
+    def _serve_frontend_asset(self, relative_path):
+        candidate = (FRONTEND_DIR / relative_path.lstrip("/")).resolve()
+        if not str(candidate).startswith(str(FRONTEND_DIR.resolve())):
+            self.send_error(403, "Forbidden")
+            return
+        if not candidate.is_file():
+            self.send_error(404, "Not Found")
+            return
+
+        content = candidate.read_bytes()
+        mime_type, _ = mimetypes.guess_type(str(candidate))
+        self.send_response(200)
+        self.send_header("Content-Type", mime_type or "application/octet-stream")
+        self.send_header("Content-Length", str(len(content)))
+        self.end_headers()
+        self.wfile.write(content)
+
     def do_GET(self):
         parsed = urlparse(self.path)
 
@@ -117,6 +135,14 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
+            return
+
+        if parsed.path in ("/", "/index.html"):
+            self._serve_frontend_asset("index.html")
+            return
+
+        if parsed.path in ("/app.js", "/styles.css"):
+            self._serve_frontend_asset(parsed.path.lstrip("/"))
             return
 
         return super().do_GET()
