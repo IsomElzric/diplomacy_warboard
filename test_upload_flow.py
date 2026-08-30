@@ -120,6 +120,26 @@ F Bre Build  SUCCEEDS
         france_state = timeline.get_season_summary(1901, "Winter")["France"]
         self.assertEqual(france_state.units, 6)
 
+    def test_winter_uses_current_season_positions_instead_of_stale_previous_total(self):
+        from main import build_game_timeline
+
+        timeline = build_game_timeline([
+            (1901, "Fall", """
+France
+A Par - Bur  SUCCEEDS
+A Mar H  SUCCEEDS
+F Bre H  SUCCEEDS
+"""),
+            (1901, "Winter", """
+France
+A Mar Disband  SUCCEEDS
+A Par Disband  SUCCEEDS
+"""),
+        ])
+
+        france_state = timeline.get_season_summary(1901, "Winter")["France"]
+        self.assertEqual(france_state.units, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

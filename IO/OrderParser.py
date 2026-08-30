@@ -13,9 +13,9 @@ class OrderParser:
 
     ORDER_LINE = re.compile(
         r"^(?P<unit>[AF])\s+"
-        r"(?P<from>[A-Za-z/]+)"
-        r"(?:\s*-\s*(?P<to>[A-Za-z/]+))?"
-        r"\s+(?P<result>SUCCEEDS|FAILS)"
+        r"(?P<from>[A-Za-z/]+)\s*"
+        r"(?P<rest>.*)\s+"
+        r"(?P<result>SUCCEEDS|FAILS)"
         r"(?:\s*\((?P<reason>.+)\))?"
         r"$"
     )
@@ -72,8 +72,27 @@ class OrderParser:
             # Order line
             m = self.ORDER_LINE.match(line)
             if m and current_country:
+                rest = (m.group("rest") or "").strip()
                 entry = m.groupdict()
-                entry["action"] = "MOVE" if entry["to"] else "HOLD"
+                entry["to"] = None
+
+                if rest == "H":
+                    entry["action"] = "HOLD"
+                elif rest.startswith("S "):
+                    entry["action"] = "SUPPORT"
+                    entry["to"] = rest[2:].strip()
+                elif rest.startswith("C "):
+                    entry["action"] = "CONVOY"
+                    entry["to"] = rest[2:].strip()
+                elif rest.startswith("-"):
+                    entry["action"] = "MOVE"
+                    entry["to"] = rest[1:].strip()
+                elif rest:
+                    entry["action"] = "MOVE"
+                    entry["to"] = rest.strip()
+                else:
+                    entry["action"] = "HOLD"
+
                 entry["success"] = entry["result"] == "SUCCEEDS"
 
                 # Dislodgement detection

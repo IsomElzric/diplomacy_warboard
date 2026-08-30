@@ -19,6 +19,10 @@ class FinalPositionEngine:
                 if o["dislodged"]:
                     continue  # unit must retreat or be destroyed
 
+                if action in {"SUPPORT", "CONVOY"}:
+                    final_positions[o["from"]] = country
+                    continue
+
                 if o["success"] and o["to"]:
                     final_positions[o["to"]] = country
                 else:

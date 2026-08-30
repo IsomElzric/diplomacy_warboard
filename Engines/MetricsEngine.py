@@ -28,6 +28,14 @@ class MetricsEngine:
             # Growth Rate (normalized SC change)
             current.growth_rate = (current.sc_gain / current.sc if current.sc > 0 else 0)
 
+            # Momentum updates only in fall. During the rest of the season cycle,
+            # the last validated fall value should persist until the next fall refresh.
+            if prev and current.season != "Fall":
+                current.momentum = prev.momentum
+                current.ema_momentum = prev.ema_momentum
+                current.cgi = prev.cgi
+                continue
+
             # Momentum (simple version: SC gain + unit growth)
             current.momentum = current.sc_gain + current.unit_growth
 

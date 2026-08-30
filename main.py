@@ -115,6 +115,8 @@ def build_game_timeline(season_data):
 
         for state in country_states:
             country_name = state.country
+            current_units = country_position_counts.get(country_name, state.units)
+
             if season.lower() == "winter":
                 build_count = sum(
                     1 for order in movement_orders.get(country_name, [])
@@ -125,14 +127,12 @@ def build_game_timeline(season_data):
                     if order.get("action") == "DISBAND" and order.get("success")
                 )
 
-                baseline_units = previous_country_units.get(country_name, country_position_counts.get(country_name, state.units))
-                state.units = max(0, baseline_units + build_count - disband_count)
+                baseline_units = previous_country_units.get(country_name, current_units)
+                state.units = current_units if current_units is not None else max(0, baseline_units + build_count - disband_count)
                 state.builds = build_count
                 previous_country_units[country_name] = state.units
             else:
-                current_units = country_position_counts.get(country_name, state.units)
-                prior_units = previous_country_units.get(country_name, current_units)
-                state.units = max(current_units, prior_units)
+                state.units = current_units
                 state.builds = 0
                 previous_country_units[country_name] = state.units
 
