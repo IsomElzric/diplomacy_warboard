@@ -99,6 +99,27 @@ A Mos Build  SUCCEEDS
         self.assertEqual(movement["France"][1]["action"], "BUILD")
         self.assertEqual(movement["Russia"][0]["action"], "BUILD")
 
+    def test_full_game_keeps_country_unit_totals_across_winter_builds(self):
+        from main import build_game_timeline
+
+        timeline = build_game_timeline([
+            (1901, "Fall", """
+France
+A Par - Bur  SUCCEEDS
+A Mar - Spa  SUCCEEDS
+F Bre - MAO  SUCCEEDS
+"""),
+            (1901, "Winter", """
+France
+A Par Build  SUCCEEDS
+A Mar Build  SUCCEEDS
+F Bre Build  SUCCEEDS
+"""),
+        ])
+
+        france_state = timeline.get_season_summary(1901, "Winter")["France"]
+        self.assertEqual(france_state.units, 6)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -88,6 +88,7 @@ def build_game_timeline(season_data):
     """
     reset_supply_centers()
     timeline = GameTimeline()
+    previous_country_units = {}
 
     for year, season, text in season_data:
         parser = OrderParser()
@@ -105,6 +106,35 @@ def build_game_timeline(season_data):
             year=year,
             season=season,
         )
+
+        country_position_counts = {}
+        for country_name in {state.country for state in country_states}:
+            country_position_counts[country_name] = sum(
+                1 for province, owner in final_positions.items() if owner == country_name
+            )
+
+        for state in country_states:
+            country_name = state.country
+            if season.lower() == "winter":
+                build_count = sum(
+                    1 for order in movement_orders.get(country_name, [])
+                    if order.get("action") == "BUILD" and order.get("success")
+                )
+                disband_count = sum(
+                    1 for order in movement_orders.get(country_name, [])
+                    if order.get("action") == "DISBAND" and order.get("success")
+                )
+
+                baseline_units = previous_country_units.get(country_name, country_position_counts.get(country_name, state.units))
+                state.units = max(0, baseline_units + build_count - disband_count)
+                state.builds = build_count
+                previous_country_units[country_name] = state.units
+            else:
+                current_units = country_position_counts.get(country_name, state.units)
+                prior_units = previous_country_units.get(country_name, current_units)
+                state.units = max(current_units, prior_units)
+                state.builds = 0
+                previous_country_units[country_name] = state.units
 
         timeline.add_season_states(year, season, country_states)
 

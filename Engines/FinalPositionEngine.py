@@ -6,6 +6,16 @@ class FinalPositionEngine:
         # Movement phase
         for country, orders in movement_orders.items():
             for o in orders:
+                action = (o.get("action") or "").upper()
+
+                if action in {"BUILD", "DISBAND"}:
+                    if o.get("success"):
+                        if action == "BUILD":
+                            final_positions[o["from"]] = country
+                        else:
+                            final_positions.pop(o["from"], None)
+                    continue
+
                 if o["dislodged"]:
                     continue  # unit must retreat or be destroyed
 

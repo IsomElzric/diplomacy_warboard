@@ -532,16 +532,54 @@ function renderWarboard(country) {
   const board = document.getElementById('warboard-grid');
   board.innerHTML = '';
 
+  const selectedCountry = country || state.selectedCountry;
+  const selectedUnits = Number(state.payload?.countries?.[selectedCountry]?.current?.units ?? 0);
+
+  const isEnemyAdjacent = (rowIndex, colIndex, owner) => {
+    if (!selectedCountry || owner === selectedCountry || owner === 'Neutral') return false;
+
+    const deltas = [-1, 0, 1];
+    return deltas.some((rowDelta) => deltas.some((colDelta) => {
+      if (rowDelta === 0 && colDelta === 0) return false;
+      const nextRow = rowIndex + rowDelta;
+      const nextCol = colIndex + colDelta;
+      if (nextRow < 0 || nextRow >= boardLayout.length || nextCol < 0 || nextCol >= boardLayout[nextRow].length) {
+        return false;
+      }
+      return boardLayout[nextRow][nextCol] === selectedCountry;
+    }));
+  };
+
   for (let rowIndex = 0; rowIndex < boardLayout.length; rowIndex += 1) {
     for (let colIndex = 0; colIndex < boardLayout[rowIndex].length; colIndex += 1) {
       const owner = boardLayout[rowIndex][colIndex];
       const tile = document.createElement('div');
       const tileName = owner === 'Neutral' ? 'Neutral' : owner;
+      const isFriendly = !!selectedCountry && owner === selectedCountry;
+      const isFront = !!selectedCountry && isFriendly && (
+        rowIndex > 0 && boardLayout[rowIndex - 1][colIndex] && boardLayout[rowIndex - 1][colIndex] !== selectedCountry && boardLayout[rowIndex - 1][colIndex] !== 'Neutral'
+        || rowIndex < boardLayout.length - 1 && boardLayout[rowIndex + 1][colIndex] && boardLayout[rowIndex + 1][colIndex] !== selectedCountry && boardLayout[rowIndex + 1][colIndex] !== 'Neutral'
+        || colIndex > 0 && boardLayout[rowIndex][colIndex - 1] && boardLayout[rowIndex][colIndex - 1] !== selectedCountry && boardLayout[rowIndex][colIndex - 1] !== 'Neutral'
+        || colIndex < boardLayout[rowIndex].length - 1 && boardLayout[rowIndex][colIndex + 1] && boardLayout[rowIndex][colIndex + 1] !== selectedCountry && boardLayout[rowIndex][colIndex + 1] !== 'Neutral'
+      );
+      const isConflict = !!selectedCountry && isEnemyAdjacent(rowIndex, colIndex, owner);
+
       tile.className = `province-tile ${countryPalette[owner] ?? 'neutral'}`;
-      if (country && owner === country) {
+      if (isFriendly) {
         tile.classList.add('selected');
       }
-      tile.innerHTML = `<span>${tileName}</span><i class="center-dot"></i>`;
+      if (isFront) {
+        tile.classList.add('front-zone');
+      }
+      if (isConflict) {
+        tile.classList.add('conflict-zone');
+      }
+
+      const unitBadge = isFriendly && selectedUnits > 0
+        ? `<span class="unit-badge">${Math.min(9, Math.max(1, Math.round(selectedUnits / 2)))}</span>`
+        : '';
+      const frontBadge = isConflict ? '<span class="front-badge">!</span>' : '';
+      tile.innerHTML = `<span>${tileName}</span>${unitBadge}${frontBadge}<i class="center-dot"></i>`;
       board.appendChild(tile);
     }
   }
@@ -578,16 +616,24 @@ function renderSummaryTable(payload) {
 function renderMomentumChart(payload) {
   const chart = document.getElementById('momentum-chart');
   const countries = getCountryEntries(payload);
-  const max = Math.max(1, ...countries.map(([, data]) => Number(data?.current?.momentum ?? 0)));
+  const values = countries.map(([, data]) => Number(data?.current?.momentum ?? 0));
+  const maxAbs = Math.max(1, ...values.map((value) => Math.abs(value)));
 
   chart.innerHTML = countries.map(([country, data]) => {
     const current = data.current ?? {};
     const momentum = Number(current.momentum ?? 0);
-    const percent = (momentum / max) * 100;
+    const width = (Math.abs(momentum) / maxAbs) * 50;
+    const fillStyle = momentum >= 0
+      ? `left:50%; width:${width}%;`
+      : `right:50%; width:${width}%;`;
+
     return `
       <div class="bar-row">
         <div class="bar-label">${country}</div>
-        <div class="bar-track"><div class="bar-fill" style="width:${percent}%"></div></div>
+        <div class="bar-track">
+          <div class="bar-zero"></div>
+          <div class="bar-fill ${momentum >= 0 ? 'positive' : 'negative'}" style="${fillStyle}"></div>
+        </div>
         <div>${formatNumber(momentum)}</div>
       </div>
     `;
