@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -161,9 +162,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    PORT = 8000
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), DashboardHandler)
-    print(f"Serving Diplomacy dashboard at http://127.0.0.1:{PORT}")
+    HOST = os.environ.get("HOST", "0.0.0.0")
+    PORT = int(os.environ.get("PORT", "8000"))
+    server = ThreadingHTTPServer((HOST, PORT), DashboardHandler)
+    print(f"Serving Diplomacy dashboard at http://{HOST}:{PORT}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

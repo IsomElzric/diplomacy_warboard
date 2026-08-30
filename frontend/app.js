@@ -1,6 +1,198 @@
+const defaultCountryBaseline = {
+  England: {
+    current: {
+      country: 'England',
+      year: 1901,
+      season: 'Spring',
+      sc: 3,
+      units: 3,
+      builds: 0,
+      sc_gains: 0,
+      unit_growth: 0,
+      build_effeciency: 0,
+      momentum: 0,
+      ema_momentum: 0,
+      growth_rate: 0,
+      cgi: 0,
+      holds: 0,
+      supports: 0,
+      active_fronts: 0,
+      hold_rate: 0,
+      support_rate: 0,
+      isolation: 0,
+      encirclement: 0,
+    },
+    history: [
+      { year: 1901, season: 'Spring', country: 'England', sc: 3, units: 3, builds: 0, momentum: 0, ema_momentum: 0, cgi: 0 },
+    ],
+  },
+  France: {
+    current: {
+      country: 'France',
+      year: 1901,
+      season: 'Spring',
+      sc: 3,
+      units: 3,
+      builds: 0,
+      sc_gains: 0,
+      unit_growth: 0,
+      build_effeciency: 0,
+      momentum: 0,
+      ema_momentum: 0,
+      growth_rate: 0,
+      cgi: 0,
+      holds: 0,
+      supports: 0,
+      active_fronts: 0,
+      hold_rate: 0,
+      support_rate: 0,
+      isolation: 0,
+      encirclement: 0,
+    },
+    history: [
+      { year: 1901, season: 'Spring', country: 'France', sc: 3, units: 3, builds: 0, momentum: 0, ema_momentum: 0, cgi: 0 },
+    ],
+  },
+  Germany: {
+    current: {
+      country: 'Germany',
+      year: 1901,
+      season: 'Spring',
+      sc: 3,
+      units: 3,
+      builds: 0,
+      sc_gains: 0,
+      unit_growth: 0,
+      build_effeciency: 0,
+      momentum: 0,
+      ema_momentum: 0,
+      growth_rate: 0,
+      cgi: 0,
+      holds: 0,
+      supports: 0,
+      active_fronts: 0,
+      hold_rate: 0,
+      support_rate: 0,
+      isolation: 0,
+      encirclement: 0,
+    },
+    history: [
+      { year: 1901, season: 'Spring', country: 'Germany', sc: 3, units: 3, builds: 0, momentum: 0, ema_momentum: 0, cgi: 0 },
+    ],
+  },
+  Italy: {
+    current: {
+      country: 'Italy',
+      year: 1901,
+      season: 'Spring',
+      sc: 3,
+      units: 3,
+      builds: 0,
+      sc_gains: 0,
+      unit_growth: 0,
+      build_effeciency: 0,
+      momentum: 0,
+      ema_momentum: 0,
+      growth_rate: 0,
+      cgi: 0,
+      holds: 0,
+      supports: 0,
+      active_fronts: 0,
+      hold_rate: 0,
+      support_rate: 0,
+      isolation: 0,
+      encirclement: 0,
+    },
+    history: [
+      { year: 1901, season: 'Spring', country: 'Italy', sc: 3, units: 3, builds: 0, momentum: 0, ema_momentum: 0, cgi: 0 },
+    ],
+  },
+  Austria: {
+    current: {
+      country: 'Austria',
+      year: 1901,
+      season: 'Spring',
+      sc: 3,
+      units: 3,
+      builds: 0,
+      sc_gains: 0,
+      unit_growth: 0,
+      build_effeciency: 0,
+      momentum: 0,
+      ema_momentum: 0,
+      growth_rate: 0,
+      cgi: 0,
+      holds: 0,
+      supports: 0,
+      active_fronts: 0,
+      hold_rate: 0,
+      support_rate: 0,
+      isolation: 0,
+      encirclement: 0,
+    },
+    history: [
+      { year: 1901, season: 'Spring', country: 'Austria', sc: 3, units: 3, builds: 0, momentum: 0, ema_momentum: 0, cgi: 0 },
+    ],
+  },
+  Turkey: {
+    current: {
+      country: 'Turkey',
+      year: 1901,
+      season: 'Spring',
+      sc: 3,
+      units: 3,
+      builds: 0,
+      sc_gains: 0,
+      unit_growth: 0,
+      build_effeciency: 0,
+      momentum: 0,
+      ema_momentum: 0,
+      growth_rate: 0,
+      cgi: 0,
+      holds: 0,
+      supports: 0,
+      active_fronts: 0,
+      hold_rate: 0,
+      support_rate: 0,
+      isolation: 0,
+      encirclement: 0,
+    },
+    history: [
+      { year: 1901, season: 'Spring', country: 'Turkey', sc: 3, units: 3, builds: 0, momentum: 0, ema_momentum: 0, cgi: 0 },
+    ],
+  },
+  Russia: {
+    current: {
+      country: 'Russia',
+      year: 1901,
+      season: 'Spring',
+      sc: 3,
+      units: 3,
+      builds: 0,
+      sc_gains: 0,
+      unit_growth: 0,
+      build_effeciency: 0,
+      momentum: 0,
+      ema_momentum: 0,
+      growth_rate: 0,
+      cgi: 0,
+      holds: 0,
+      supports: 0,
+      active_fronts: 0,
+      hold_rate: 0,
+      support_rate: 0,
+      isolation: 0,
+      encirclement: 0,
+    },
+    history: [
+      { year: 1901, season: 'Spring', country: 'Russia', sc: 3, units: 3, builds: 0, momentum: 0, ema_momentum: 0, cgi: 0 },
+    ],
+  },
+};
+
 const emptyPayload = {
   selectedSeason: null,
-  countries: {},
+  countries: defaultCountryBaseline,
 };
 
 const fallbackPayload = {
@@ -433,7 +625,9 @@ function renderCountryFocus(country, payload) {
 
   const rank = countryEntriesRank(country, payload);
   document.getElementById('focus-rank').textContent = `Rank ${rank}`;
-  document.getElementById('season-header').textContent = formatSeason(payload.selectedSeason.year, payload.selectedSeason.season);
+  document.getElementById('season-header').textContent = payload?.selectedSeason
+    ? formatSeason(payload.selectedSeason.year, payload.selectedSeason.season)
+    : 'No Season Loaded';
 }
 
 function countryEntriesRank(country, payload) {
@@ -450,7 +644,7 @@ function renderDashboard(payload) {
   buildSeasonOptions(normalizedPayload);
   buildCountryOptions(normalizedPayload);
 
-  if (!season || !Object.keys(normalizedPayload.countries || {}).length) {
+  if (!Object.keys(normalizedPayload.countries || {}).length) {
     document.getElementById('season-header').textContent = 'No Season Loaded';
     document.getElementById('focus-country').textContent = '—';
     document.getElementById('focus-sc').textContent = '0';

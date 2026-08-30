@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: diplomacy-warboard
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: ""
+    startCommand: "python dashboard_server.py"
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
