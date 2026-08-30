@@ -196,7 +196,7 @@ const emptyPayload = {
 };
 
 const fallbackPayload = {
-  selectedSeason: { year: 1901, season: 'Spring' },
+  selectedSeason: null,
   countries: {
     England: {
       current: {
@@ -411,7 +411,7 @@ const countryPalette = {
 };
 
 const state = {
-  payload: fallbackPayload,
+  payload: emptyPayload,
   selectedCountry: null,
   selectedSeason: null,
 };

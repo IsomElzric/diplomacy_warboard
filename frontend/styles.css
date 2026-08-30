@@ -9,15 +9,15 @@
   --gold: #d7b46d;
   --green: #6cc88a;
   --red: #d77b6d;
-  --grey: #8c9096;
+  --grey: #dfe3e8;
   --shadow: rgba(0, 0, 0, 0.35);
-  --england: #b1d6ff;
-  --france: #f6d28b;
-  --germany: #d9a5c4;
-  --italy: #98d7a4;
-  --austria: #e8d27b;
-  --turkey: #ef8a7a;
-  --russia: #a9b4ff;
+  --england: #4d7dff;
+  --france: #74d8ff;
+  --germany: #dfe3e8;
+  --italy: #59c777;
+  --austria: #d64b4b;
+  --turkey: #f5d845;
+  --russia: #d93bcf;
 }
 
 * {
