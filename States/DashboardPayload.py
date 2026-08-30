@@ -17,6 +17,8 @@ class DashboardPayloadBuilder:
             "forecast": {},
         }
 
+        board = game_timeline.get_board(year, season)
+
         seasons = set()
         for country, state in summary.items():
             seasons.add((state.year, state.season))
@@ -29,6 +31,11 @@ class DashboardPayloadBuilder:
             {"year": year_value, "season": season_name}
             for year_value, season_name in sorted(seasons, key=lambda item: (item[0], ["Spring", "Summer", "Fall", "Winter"].index(item[1]) if item[1] in ["Spring", "Summer", "Fall", "Winter"] else 99))
         ]
+
+        if board:
+            for country, state in summary.items():
+                state.sc = len([province for province, owner in board.sc_owners.items() if owner == country])
+                state.units = len([unit for unit in board.units_by_province.values() if unit.country == country])
 
         for country, state in summary.items():
             timeline = game_timeline.get_country_timeline(country)
@@ -47,6 +54,12 @@ class DashboardPayloadBuilder:
             }
 
         game_state = GameState(year, season)
+        if board:
+            game_state.board = board
+            for unit in board.units_by_province.values():
+                game_state.board.add_unit(unit)
+            for province, owner in board.sc_owners.items():
+                game_state.board.sc_owners[province] = owner
         for country, data in payload["countries"].items():
             state = data["current"]
             from States.CountryState import CountryState
@@ -74,9 +87,9 @@ class DashboardPayloadBuilder:
                     "unit_type": unit.unit_type,
                     "province": unit.province,
                 }
-                for unit in game_state.board.units_by_province.values()
+                for unit in (board.units_by_province.values() if board else [])
             ],
-            "scOwners": game_state.board.sc_owners.copy(),
+            "scOwners": (board.sc_owners.copy() if board else {}),
         }
 
         return payload

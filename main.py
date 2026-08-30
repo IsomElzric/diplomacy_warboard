@@ -136,9 +136,19 @@ def build_game_timeline(season_data):
 
         # --- 4. Build CountryState objects from board ---
         country_states = []
+        board_countries = set()
 
-        for country in {owner for owner in sc_owners.values() if owner not in ("", "Neutral")}:
+        for owner in sc_owners.values():
+            if owner not in ("", "Neutral"):
+                board_countries.add(owner)
+        for country, orders in movement_orders.items():
+            if country:
+                board_countries.add(country)
+        for province, owner in final_positions.items():
+            if owner and owner not in ("", "Neutral"):
+                board_countries.add(owner)
 
+        for country in sorted(board_countries):
             owned_scs = board.get_owned_scs_for_country(country)
             units = board.get_units_for_country(country)
 
@@ -147,7 +157,7 @@ def build_game_timeline(season_data):
                 year=year,
                 season=season,
                 sc=len(owned_scs),
-                units=len(units),
+                units=len(units) if units else len(owned_scs),
                 builds=0,
             )
 
@@ -191,11 +201,11 @@ def build_game_timeline(season_data):
 
         # --- 7. Compute momentum/EMA/CGI using previous season ---
         if previous_country_states:
-            histories = {
-                country: [previous_country_states[c], cs]
-                for cs in country_states
-                if (c := cs.country) in previous_country_states
-            }
+            histories = {}
+            for cs in country_states:
+                previous = previous_country_states.get(cs.country)
+                if previous is not None:
+                    histories[cs.country] = [previous, cs]
             metrics_engine.compute_metrics_by_country(histories)
 
         # Update continuity
