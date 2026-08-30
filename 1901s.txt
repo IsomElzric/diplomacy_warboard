@@ -1,0 +1,50 @@
+Austria
+A Bud - Tri  SUCCEEDS
+
+F Tri - ADR  SUCCEEDS
+
+A Vie - Tyr  SUCCEEDS
+
+England
+F Edi - NTH  SUCCEEDS
+
+F Lon - ENG  SUCCEEDS
+
+A Lvp - Yor  SUCCEEDS
+
+France
+F Bre - MAO  SUCCEEDS
+
+A Mar - Spa  SUCCEEDS
+
+A Par - Bur  SUCCEEDS
+
+Germany
+A Ber H  SUCCEEDS
+
+F Kie H  SUCCEEDS
+
+A Mun H  SUCCEEDS
+
+Italy
+F Nap H  SUCCEEDS
+
+A Rom H  SUCCEEDS
+
+A Ven H  SUCCEEDS
+
+Russia
+A Mos - Stp  SUCCEEDS
+
+F Sev - BLA  FAILS (Attack strength is not greater than the prevent strength)
+
+F Stp/sc - BOT  SUCCEEDS
+
+A War - Ukr  SUCCEEDS
+
+Turkey
+F Ank - BLA  FAILS (Attack strength is not greater than the prevent strength)
+
+A Con - Bul  SUCCEEDS
+
+A Smy - Con  SUCCEEDS

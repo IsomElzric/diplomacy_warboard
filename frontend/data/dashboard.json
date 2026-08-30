@@ -1,0 +1,56 @@
+{
+  "selectedSeason": {
+    "year": 1901,
+    "season": "Spring"
+  },
+  "countries": {
+    "England": {
+      "current": {
+        "country": "England",
+        "year": 1901,
+        "season": "Spring",
+        "sc": 3,
+        "units": 3,
+        "builds": 0,
+        "momentum": 1.2,
+        "active_fronts": 2,
+        "isolation": 0.5,
+        "encirclement": 0.3
+      },
+      "history": [
+        {
+          "year": 1901,
+          "season": "Spring",
+          "sc": 3,
+          "units": 3,
+          "momentum": 1.2,
+          "active_fronts": 2
+        }
+      ]
+    },
+    "France": {
+      "current": {
+        "country": "France",
+        "year": 1901,
+        "season": "Spring",
+        "sc": 4,
+        "units": 4,
+        "builds": 1,
+        "momentum": 1.6,
+        "active_fronts": 3,
+        "isolation": 0.2,
+        "encirclement": 0.4
+      },
+      "history": [
+        {
+          "year": 1901,
+          "season": "Spring",
+          "sc": 4,
+          "units": 4,
+          "momentum": 1.6,
+          "active_fronts": 3
+        }
+      ]
+    }
+  }
+}

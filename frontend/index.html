@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diplomacy Warboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="left-panel">
+        <div class="panel-header">
+          <p class="eyebrow">Command Readout</p>
+          <h1>Warboard</h1>
+        </div>
+
+        <div class="control-block">
+          <label for="season-select">Year / Season</label>
+          <select id="season-select"></select>
+        </div>
+
+        <div class="control-block">
+          <label for="country-select">Country Focus</label>
+          <select id="country-select"></select>
+        </div>
+
+        <section class="upload-panel">
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="mini-label">Order Intake</p>
+              <h3>Upload Orders</h3>
+            </div>
+          </div>
+
+          <div class="control-block compact">
+            <label for="upload-mode">Mode</label>
+            <select id="upload-mode">
+              <option value="season">Single Season</option>
+              <option value="full">Full Game</option>
+            </select>
+          </div>
+
+          <div class="inline-fields">
+            <div class="control-block compact">
+              <label for="upload-year">Year</label>
+              <input id="upload-year" type="number" min="1901" max="2000" value="1901" />
+            </div>
+            <div class="control-block compact">
+              <label for="upload-season">Season</label>
+              <select id="upload-season">
+                <option value="Spring">Spring</option>
+                <option value="Fall">Fall</option>
+                <option value="Winter">Winter</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="control-block compact">
+            <label for="upload-text">Order Text</label>
+            <textarea id="upload-text" rows="10" placeholder="England
+F Edi - NTH SUCCEEDS
+A Lvp - Yor SUCCEEDS
+..."></textarea>
+          </div>
+
+          <button id="upload-submit" type="button">Load Orders</button>
+          <div id="upload-status" class="upload-status">Waiting for orders.</div>
+        </section>
+
+        <section class="country-focus">
+          <div class="focus-topline">
+            <div>
+              <p class="mini-label">National Status</p>
+              <h2 id="focus-country">-</h2>
+            </div>
+            <div id="focus-rank" class="rank-pill">Rank N/A</div>
+          </div>
+
+          <div class="stat-grid">
+            <div class="stat-box">
+              <span>SC</span>
+              <strong id="focus-sc">0</strong>
+            </div>
+            <div class="stat-box">
+              <span>Units</span>
+              <strong id="focus-units">0</strong>
+            </div>
+            <div class="stat-box">
+              <span>EMA</span>
+              <strong id="focus-ema">0.00</strong>
+            </div>
+            <div class="stat-box">
+              <span>CGI</span>
+              <strong id="focus-cgi">0.00</strong>
+            </div>
+          </div>
+
+          <div class="model-box">
+            <div class="model-row">
+              <span>Win outlook</span>
+              <strong id="focus-win">0%</strong>
+            </div>
+            <div class="model-row">
+              <span>Confidence</span>
+              <strong id="focus-confidence">0%</strong>
+            </div>
+            <div class="progress-bar">
+              <span id="confidence-bar"></span>
+            </div>
+          </div>
+
+          <div class="brief-box">
+            <p class="mini-label">Operational Brief</p>
+            <p id="country-brief">No country selected.</p>
+          </div>
+        </section>
+
+        <section class="timeline-box">
+          <div class="section-heading">
+            <p class="mini-label">Trend Overview</p>
+            <h3>Recent History</h3>
+          </div>
+          <div id="history-list" class="history-list"></div>
+        </section>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Diplomatic Overview</p>
+            <h2 id="season-header">Spring 1901</h2>
+          </div>
+        </header>
+
+        <section class="warboard-panel panel-card">
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="mini-label">Strategic Theater</p>
+              <h3>Warboard</h3>
+            </div>
+            <div class="legend">
+              <span><i class="legend-swatch england"></i>England</span>
+              <span><i class="legend-swatch france"></i>France</span>
+              <span><i class="legend-swatch germany"></i>Germany</span>
+              <span><i class="legend-swatch italy"></i>Italy</span>
+              <span><i class="legend-swatch austria"></i>Austria</span>
+              <span><i class="legend-swatch turkey"></i>Turkey</span>
+              <span><i class="legend-swatch russia"></i>Russia</span>
+            </div>
+          </div>
+          <div id="warboard-grid" class="warboard-grid"></div>
+        </section>
+
+        <section class="card-grid">
+          <div class="panel-card wide-panel">
+            <div class="section-heading">
+              <p class="mini-label">Comparison Table</p>
+              <h3>Current Position</h3>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Country</th>
+                    <th>SC</th>
+                    <th>Units</th>
+                    <th>EMA</th>
+                    <th>CGI</th>
+                    <th>Trend</th>
+                  </tr>
+                </thead>
+                <tbody id="country-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel-card chart-panel">
+            <div class="section-heading">
+              <p class="mini-label">Momentum</p>
+              <h3>All Countries</h3>
+            </div>
+            <div id="momentum-chart" class="bars-chart"></div>
+          </div>
+
+          <div class="panel-card chart-panel">
+            <div class="section-heading">
+              <p class="mini-label">Trajectory</p>
+              <h3>Selected Country</h3>
+            </div>
+            <div id="country-trend-chart" class="trend-chart"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
