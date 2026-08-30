@@ -12,6 +12,7 @@ from States.DashboardPayload import DashboardPayloadBuilder
 
 ROOT = Path(__file__).resolve().parent
 FRONTEND_DIR = ROOT / "frontend"
+ACTIVE_GAME_TIMELINE = None
 
 
 def normalize_order_text(text):
@@ -73,6 +74,11 @@ def parse_uploaded_game_text(text):
     return blocks
 
 
+def set_active_game_timeline(game_timeline):
+    global ACTIVE_GAME_TIMELINE
+    ACTIVE_GAME_TIMELINE = game_timeline
+
+
 def build_uploaded_payload(text, year=1901, season="Spring", mode="season"):
     if not text or not text.strip():
         raise ValueError("Order text is required.")
@@ -86,17 +92,28 @@ def build_uploaded_payload(text, year=1901, season="Spring", mode="season"):
             raise ValueError("No valid season blocks were found in the uploaded game text.")
         selected_year, selected_season = blocks[-1][0], blocks[-1][1]
         game_timeline = build_game_timeline(blocks)
+        set_active_game_timeline(game_timeline)
         return DashboardPayloadBuilder.build(game_timeline, selected_year, selected_season)
 
     season_year = int(year) if year is not None else 1901
     season_name = season or "Spring"
     game_timeline = build_game_timeline([(season_year, season_name, cleaned_text)])
+    set_active_game_timeline(game_timeline)
     return DashboardPayloadBuilder.build(game_timeline, season_year, season_name)
 
 
 def build_dashboard_payload(year=1901, season="Spring"):
     reset_supply_centers()
-    return {"selectedSeason": None, "countries": {}}
+    if ACTIVE_GAME_TIMELINE is None:
+        return {"selectedSeason": None, "countries": {}}
+
+    season_year = int(year) if year is not None else 1901
+    season_name = season or "Spring"
+    summary = ACTIVE_GAME_TIMELINE.get_season_summary(season_year, season_name)
+    if not summary:
+        return {"selectedSeason": {"year": season_year, "season": season_name}, "countries": {}}
+
+    return DashboardPayloadBuilder.build(ACTIVE_GAME_TIMELINE, season_year, season_name)
 
 
 class DashboardHandler(SimpleHTTPRequestHandler):

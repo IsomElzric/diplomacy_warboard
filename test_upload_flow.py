@@ -1,6 +1,6 @@
 import unittest
 
-from dashboard_server import build_uploaded_payload, parse_uploaded_game_text
+from dashboard_server import build_dashboard_payload, build_uploaded_payload, parse_uploaded_game_text
 
 
 class UploadFlowTests(unittest.TestCase):
@@ -54,6 +54,27 @@ F ENG - MAO  SUCCEEDS
 
         self.assertIn("Austria", payload["countries"])
         self.assertIn("England", payload["countries"])
+
+    def test_historical_season_lookup_returns_saved_game_data(self):
+        text = """
+Spring 1901
+England
+F Edi - NTH  SUCCEEDS
+A Lvp - Yor  SUCCEEDS
+
+Fall 1901
+England
+F Edi - NTH  SUCCEEDS
+A Lvp - Yor  SUCCEEDS
+"""
+
+        build_uploaded_payload(text, mode="full")
+        payload = build_dashboard_payload(year=1901, season="Spring")
+
+        self.assertEqual(payload["selectedSeason"]["year"], 1901)
+        self.assertEqual(payload["selectedSeason"]["season"], "Spring")
+        self.assertIn("England", payload["countries"])
+        self.assertGreater(len(payload["countries"]["England"]["history"]), 0)
 
     def test_winter_build_and_disband_orders_are_parsed(self):
         text = """
