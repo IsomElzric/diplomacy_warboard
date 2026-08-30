@@ -168,8 +168,8 @@ def build_game_timeline(season_data):
         # --- 5. Winter build/disband logic ---
         if season.lower() == "winter":
             for cs in country_states:
-                country = cs.country
-                orders = movement_orders.get(country, [])
+                country_name = cs.country
+                orders = movement_orders.get(country_name, [])
 
                 build_count = sum(
                     1 for o in orders
@@ -180,7 +180,9 @@ def build_game_timeline(season_data):
                     if o.get("action") == "DISBAND" and o.get("success")
                 )
 
-                prev_units = previous_country_states.get(country, cs.units)
+                prev_state = previous_country_states.get(country_name)
+                prev_units = prev_state.units if prev_state else cs.units
+
                 cs.units = max(0, prev_units + build_count - disband_count)
                 cs.builds = build_count
 
