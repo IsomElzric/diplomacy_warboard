@@ -302,10 +302,10 @@ def build_game_timeline(season_data):
         timeline.board_states[(year, season)] = board
 
         # --- 7. Derive normalized board features and historical metrics ---
-        histories = {}
-        for cs in country_states:
-            previous = previous_country_states.get(cs.country)
-            histories[cs.country] = [previous, cs] if previous is not None else [cs]
+        histories = {
+            country_name: [snapshot.country_state for snapshot in country_timeline.snapshots]
+            for country_name, country_timeline in timeline.country_timelines.items()
+        }
         metrics_engine.compute_metrics_by_country(histories)
 
         # Update continuity

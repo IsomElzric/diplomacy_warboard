@@ -67,6 +67,18 @@ A Par - Bur  SUCCEEDS
         self.assertGreater(fall.operational_efficiency, 0)
         self.assertGreater(fall.strategic_position, 0)
 
+    def test_metrics_preserve_each_season_derivatives_across_full_history(self):
+        spring = CountryState("England", year=1901, season="Spring", sc=3, units=3)
+        fall_1901 = CountryState("England", year=1901, season="Fall", sc=4, units=4)
+        fall_1902 = CountryState("England", year=1902, season="Fall", sc=6, units=5)
+
+        MetricsEngine().compute_metrics_by_country([spring, fall_1901, fall_1902])
+
+        self.assertEqual(fall_1901.sc_gain, 1)
+        self.assertEqual(fall_1902.sc_gain, 2)
+        self.assertGreater(fall_1901.momentum, 0)
+        self.assertGreater(fall_1902.momentum, fall_1901.momentum)
+
     def test_unit_efficiency_separates_successful_defense_from_aggression(self):
         defense = CountryState("England", year=1901, season="Fall", sc=3, units=3)
         defense.order_count = 3
