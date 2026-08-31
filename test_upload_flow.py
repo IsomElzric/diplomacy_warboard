@@ -5,6 +5,7 @@ from dashboard_server import (
     build_uploaded_payload,
     merge_uploaded_game_text,
     parse_uploaded_game_text,
+    reset_active_game_timeline,
 )
 
 
@@ -121,6 +122,17 @@ A Lvp - Yor  SUCCEEDS
         self.assertEqual(payload["selectedSeason"]["season"], "Spring")
         self.assertIn("England", payload["countries"])
         self.assertGreater(len(payload["countries"]["England"]["history"]), 0)
+
+    def test_reset_active_game_timeline_removes_saved_server_game(self):
+        build_uploaded_payload("""
+Spring 1901
+England
+F Edi - NTH  SUCCEEDS
+""", mode="full")
+
+        reset_active_game_timeline()
+
+        self.assertIsNone(build_dashboard_payload()["selectedSeason"])
 
     def test_winter_build_and_disband_orders_are_parsed(self):
         text = """

@@ -508,6 +508,8 @@ const state = {
   selectedCountry: null,
   selectedSeason: null,
   gameText: '',
+  gameSession: 0,
+  restorePromise: null,
 };
 
 function round(value, digits = 2) {
@@ -1272,6 +1274,7 @@ async function submitUploadedOrders() {
   status.classList.remove('error');
 
   try {
+    const gameSession = state.gameSession;
     const existingText = state.gameText || '';
     const response = await fetch('/api/upload', {
       method: 'POST',
@@ -1293,6 +1296,7 @@ async function submitUploadedOrders() {
     if (!response.ok) {
       throw new Error(payload?.error || 'Upload failed');
     }
+    if (gameSession !== state.gameSession) return;
 
     state.gameText = payload?.savedGameText || existingText || text;
     if (state.gameText) {
@@ -1316,6 +1320,7 @@ async function restoreSavedGameState() {
   if (!savedText.trim()) {
     return;
   }
+  const gameSession = state.gameSession;
 
   try {
     const response = await fetch('/api/upload', {
@@ -1328,6 +1333,7 @@ async function restoreSavedGameState() {
       return;
     }
 
+    if (gameSession !== state.gameSession) return;
     const payload = await response.json();
     state.gameText = payload?.savedGameText || savedText;
     renderDashboard(payload);
@@ -1336,7 +1342,11 @@ async function restoreSavedGameState() {
   }
 }
 
-function startNewWarboard() {
+async function startNewWarboard() {
+  state.gameSession += 1;
+  if (state.restorePromise) {
+    await state.restorePromise;
+  }
   state.gameText = '';
   state.selectedCountry = null;
   state.selectedSeason = null;
@@ -1346,8 +1356,16 @@ function startNewWarboard() {
   document.getElementById('upload-season').value = 'Spring';
   renderDashboard({ selectedSeason: null, countries: {} });
   const status = document.getElementById('upload-status');
-  status.textContent = 'New Warboard ready for Spring 1901 orders.';
+  status.textContent = 'Starting new Warboard...';
   status.classList.remove('error');
+  try {
+    const response = await fetch('/api/reset', { method: 'POST' });
+    if (!response.ok) throw new Error('The active game could not be cleared on the server.');
+    status.textContent = 'New Warboard ready for Spring 1901 orders.';
+  } catch (error) {
+    status.textContent = error.message || 'The active game could not be cleared.';
+    status.classList.add('error');
+  }
 }
 
 function saveWarboard() {
@@ -1432,5 +1450,5 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('upload-text').value = savedGameText;
   }
   loadDashboardData();
-  restoreSavedGameState();
+  state.restorePromise = restoreSavedGameState();
 });

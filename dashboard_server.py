@@ -117,6 +117,11 @@ def set_active_game_timeline(game_timeline):
     ACTIVE_GAME_TIMELINE = game_timeline
 
 
+def reset_active_game_timeline():
+    global ACTIVE_GAME_TIMELINE
+    ACTIVE_GAME_TIMELINE = None
+
+
 def build_uploaded_payload(text, year=1901, season="Spring", mode="season", existing_text=None):
     if not text or not text.strip():
         raise ValueError("Order text is required.")
@@ -233,6 +238,16 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
+
+        if parsed.path == "/api/reset":
+            reset_active_game_timeline()
+            body = json.dumps({"ok": True}).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
 
         if parsed.path == "/api/upload":
             content_length = int(self.headers.get("Content-Length", "0"))
