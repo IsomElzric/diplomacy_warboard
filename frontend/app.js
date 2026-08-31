@@ -568,6 +568,23 @@ function getCountryHistory(country, payload) {
   return entry?.history ?? [];
 }
 
+function seasonIndex(season) {
+  return ['Spring', 'Summer', 'Fall', 'Winter'].indexOf(season);
+}
+
+function isOnOrBeforeSelectedSeason(entry, selectedSeason) {
+  if (!selectedSeason || !entry) return true;
+  if (Number(entry.year) !== Number(selectedSeason.year)) {
+    return Number(entry.year) < Number(selectedSeason.year);
+  }
+  return seasonIndex(entry.season) <= seasonIndex(selectedSeason.season);
+}
+
+function selectedHistory(country, payload) {
+  return getCountryHistory(country, payload)
+    .filter((entry) => isOnOrBeforeSelectedSeason(entry, payload?.selectedSeason));
+}
+
 function getTick(current, previous) {
   if (current === previous || current == null || previous == null) return 'flat';
   return current > previous ? 'up' : 'down';
@@ -745,12 +762,12 @@ function renderSummaryTable(payload) {
 function renderMomentumChart(payload) {
   const chart = document.getElementById('momentum-chart');
   const countries = getCountryEntries(payload);
-  const values = countries.map(([, data]) => Number(data?.current?.momentum ?? 0));
+  const values = countries.map(([country]) => selectedHistory(country, payload)
+    .reduce((total, entry) => total + Number(entry.momentum ?? 0), 0));
   const maxAbs = Math.max(1, ...values.map((value) => Math.abs(value)));
 
-  chart.innerHTML = countries.map(([country, data]) => {
-    const current = data.current ?? {};
-    const momentum = Number(current.momentum ?? 0);
+  chart.innerHTML = countries.map(([country], index) => {
+    const momentum = values[index];
     const width = (Math.abs(momentum) / maxAbs) * 50;
     const fillStyle = momentum >= 0
       ? `left:50%; width:${width}%;`
@@ -771,24 +788,27 @@ function renderMomentumChart(payload) {
 
 function renderCountryTrendChart(country, payload) {
   const chart = document.getElementById('country-trend-chart');
-  const history = getCountryHistory(country, payload);
+  const history = selectedHistory(country, payload);
 
   if (!history.length) {
     chart.innerHTML = '<div class="empty-state">No trend history available.</div>';
     return;
   }
 
-  const maxValue = Math.max(1, ...history.map((entry) => Number(entry.momentum ?? entry.sc ?? 0)));
+  const values = history.map((entry) => Number(entry.growth_rate ?? 0));
+  const maxAbs = Math.max(0.01, ...values.map((value) => Math.abs(value)));
 
   chart.innerHTML = `
-    <div class="trend-line">
-      ${history.map((entry) => {
-        const value = Number(entry.momentum ?? 0);
-        const height = Math.max(12, (value / maxValue) * 100);
+    <div class="growth-axis-label">SC growth rate by season</div>
+    <div class="trend-line growth-trend-line">
+      ${history.map((entry, index) => {
+        const value = values[index];
+        const height = Math.max(4, (Math.abs(value) / maxAbs) * 50);
+        const direction = value >= 0 ? 'positive' : 'negative';
         return `
-          <div class="trend-point" title="${entry.season} ${entry.year}: ${value}">
+          <div class="trend-point ${direction}" title="${entry.season} ${entry.year}: ${(value * 100).toFixed(1)}% SC growth">
             <span style="height:${height}%"></span>
-            <small>${entry.season.slice(0, 3)}</small>
+            <small>${entry.season.slice(0, 3)} ${entry.year}</small>
           </div>
         `;
       }).join('')}
@@ -864,6 +884,7 @@ function renderGlobalOverview(payload) {
   const overviewSupports = document.getElementById('overview-supports');
   const overviewMomentum = document.getElementById('overview-momentum');
   const overviewFactors = document.getElementById('overview-factors');
+  const stageReport = document.getElementById('global-stage-report');
 
   if (!countries.length) {
     overviewFronts.textContent = '0';
@@ -873,6 +894,7 @@ function renderGlobalOverview(payload) {
     overviewSupports.textContent = '0';
     overviewMomentum.textContent = '0.00';
     overviewFactors.innerHTML = '';
+    stageReport.innerHTML = '<p>No historical game state is loaded.</p>';
     return;
   }
 
@@ -906,6 +928,32 @@ function renderGlobalOverview(payload) {
   const mostPressed = countries
     .map(([country, data]) => ({ country, value: Number(data.current?.active_fronts ?? 0) }))
     .sort((a, b) => b.value - a.value)[0];
+  const postureGroups = countries.reduce((groups, [country, data]) => {
+    const posture = data.current?.posture || 'Inactive';
+    groups[posture] = groups[posture] || [];
+    groups[posture].push(country);
+    return groups;
+  }, {});
+  const aggregateMomentum = countries.map(([country]) => ({
+    country,
+    value: selectedHistory(country, payload).reduce(
+      (total, entry) => total + Number(entry.momentum ?? 0), 0,
+    ),
+  })).sort((a, b) => b.value - a.value);
+  const strongestTrajectory = aggregateMomentum[0];
+  const fragileCountries = countries
+    .map(([country, data]) => ({
+      country,
+      risk: Number(data.current?.isolation ?? 0) + Number(data.current?.encirclement ?? 0),
+    }))
+    .sort((a, b) => b.risk - a.risk)
+    .slice(0, 2);
+  const postures = Object.entries(postureGroups)
+    .filter(([posture]) => posture !== 'Inactive')
+    .map(([posture, names]) => `${names.join(' and ')} ${names.length === 1 ? 'is' : 'are'} ${posture.toLowerCase()}`);
+  const selectedLabel = payload.selectedSeason
+    ? formatSeason(payload.selectedSeason.year, payload.selectedSeason.season)
+    : 'the current board';
 
   overviewFactors.innerHTML = `
     <div class="overview-factor">
@@ -924,6 +972,12 @@ function renderGlobalOverview(payload) {
       <strong>Operational tempo</strong>
       ${leader ? `${leader.country} is sustaining ${round(leader.ema, 2)} EMA momentum alongside ${leader.holds} holds and ${leader.supports} supports.` : 'No operational tempo available.'}
     </div>
+  `;
+
+  stageReport.innerHTML = `
+    <p>${leader.country} holds the present material lead with ${leader.sc} supply centers and ${leader.units} units. ${strongestTrajectory.country} has accumulated ${formatNumber(strongestTrajectory.value)} momentum through ${selectedLabel}, making ${strongestTrajectory.country === leader.country ? 'that lead' : 'its long-term trajectory'} the clearest strategic signal.</p>
+    <p>${postures.length ? `${postures.join('; ')}. ` : ''}${mostPressed.country} carries the broadest operational burden across ${mostPressed.value} active fronts. ${mostIsolated.country} is the most exposed position, with isolation at ${formatNumber(mostIsolated.value)}.</p>
+    <p>${fragileCountries.map((entry) => `${entry.country} (${formatNumber(entry.risk)})`).join(' and ')} currently carry the highest combined isolation and encirclement risk. The next decisive shift is most likely to come from conversion: successful attacks on supply centers, reinforced threatened-center defense, and whether the leading powers can sustain their current posture without overextending.</p>
   `;
 }
 

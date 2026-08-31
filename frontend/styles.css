@@ -497,6 +497,22 @@ input[type="number"] {
   margin-bottom: 1rem;
 }
 
+.global-stage-report {
+  margin-bottom: 1rem;
+  border-left: 3px solid var(--gold);
+}
+
+.stage-report {
+  display: grid;
+  gap: 0.75rem;
+  color: #dfe4df;
+  line-height: 1.65;
+}
+
+.stage-report p {
+  margin: 0;
+}
+
 .warboard-panel {
   margin-bottom: 1rem;
   padding: 1rem;
@@ -767,6 +783,19 @@ tbody tr:hover {
   padding-top: 1rem;
 }
 
+.growth-axis-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.08rem;
+  text-transform: uppercase;
+}
+
+.growth-trend-line {
+  align-items: center;
+  background: linear-gradient(transparent 49.5%, rgba(255,255,255,0.3) 49.5%, rgba(255,255,255,0.3) 50.5%, transparent 50.5%);
+  height: 190px;
+}
+
 .trend-point {
   position: relative;
   flex: 1;
@@ -783,6 +812,22 @@ tbody tr:hover {
   border-radius: 4px 4px 0 0;
   background: linear-gradient(180deg, rgba(215, 180, 109, 0.95), rgba(108, 200, 138, 0.65));
   min-height: 10px;
+}
+
+.growth-trend-line .trend-point span {
+  bottom: auto;
+  width: 78%;
+  min-height: 3px;
+}
+
+.growth-trend-line .trend-point.positive span {
+  bottom: 50%;
+  background: linear-gradient(180deg, rgba(141, 209, 166, 0.92), rgba(108, 200, 138, 0.56));
+}
+
+.growth-trend-line .trend-point.negative span {
+  top: 50%;
+  background: linear-gradient(180deg, rgba(255, 153, 136, 0.58), rgba(215, 123, 109, 0.94));
 }
 
 .trend-point small {
