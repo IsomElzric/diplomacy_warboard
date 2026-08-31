@@ -7,8 +7,8 @@ from States.CountryState import CountryState
 from States.GameState import GameState
 from States.GameTimeline import GameTimeline
 from IO.ConsoleOutput import ConsoleOutput
-from Data.location_data import compute_country_geography_from_units
-from Data.supply_centers import reset_supply_centers
+from Data.location_data import PROVINCE_DATA, compute_country_geography_from_units
+from Data.supply_centers import STARTING_SUPPLY_CENTERS, reset_supply_centers
 from States.UnitState import UnitState
 from States.BoardState import BoardState
 from Engines.FrontMetricsEngine import FrontMetricsEngine
@@ -111,7 +111,12 @@ def build_game_timeline(season_data):
         )
 
         # --- 3. Build new BoardState ---
-        board = BoardState(year, season)
+        if season.lower() == "winter" and previous_board is not None:
+            board = previous_board.copy(year=year, season=season)
+        else:
+            board = BoardState(year, season)
+            if previous_board is not None:
+                board.sc_owners = previous_board.sc_owners.copy()
 
         # SC ownership (Fall only)
         ownership = SCOwnershipEngine().compute(final_positions, season)
@@ -119,24 +124,52 @@ def build_game_timeline(season_data):
         for owner, provinces in ownership.items():
             for prov in provinces:
                 sc_owners[prov] = owner
-        board.sc_owners = sc_owners
+        if season.lower() == "winter":
+            board.sc_owners = previous_board.sc_owners.copy() if previous_board is not None else sc_owners
+        else:
+            board.sc_owners = sc_owners
 
         # Units: one per occupied province, with order attached
-        for country, orders in movement_orders.items():
-            for o in orders:
-                # Determine final province of this unit
-                prov = o["to"] if o.get("success") and o.get("to") else o["from"]
-                if prov and final_positions.get(prov) == country:
-                    board.add_unit(UnitState(
-                        country=country,
-                        unit_type=o["unit"],
-                        province=prov,
-                        order=o
-                    ))
+        if season.lower() != "winter":
+            for country, orders in movement_orders.items():
+                for o in orders:
+                    prov = o["to"] if o.get("success") and o.get("to") else o["from"]
+                    if prov and final_positions.get(prov) == country:
+                        board.add_unit(UnitState(
+                            country=country,
+                            unit_type=o["unit"],
+                            province=prov,
+                            order=o
+                        ))
+        else:
+            for country, orders in movement_orders.items():
+                for o in orders:
+                    if o.get("action") == "BUILD" and o.get("success"):
+                        province = o.get("from")
+                        if province:
+                            board.add_unit(UnitState(
+                                country=country,
+                                unit_type=o["unit"],
+                                province=province,
+                                order=o,
+                            ))
+                    elif o.get("action") == "DISBAND" and o.get("success"):
+                        province = o.get("from")
+                        if province:
+                            board.remove_unit(province)
 
         # --- 4. Build CountryState objects from board ---
         country_states = []
-        board_countries = set()
+        board_countries = set(previous_country_states)
+        previous_sc_owners = (
+            previous_board.sc_owners if previous_board is not None else STARTING_SUPPLY_CENTERS
+        )
+        unit_country_by_source = {
+            order["from"]: country
+            for country, country_orders in movement_orders.items()
+            for order in country_orders
+            if order.get("from")
+        }
 
         for owner in sc_owners.values():
             if owner not in ("", "Neutral"):
@@ -157,14 +190,83 @@ def build_game_timeline(season_data):
                 year=year,
                 season=season,
                 sc=len(owned_scs),
-                units=len(units) if units else len(owned_scs),
+                units=len(units),
                 builds=0,
             )
 
             # Holds & supports from orders
             orders = movement_orders.get(country, [])
+            cs.order_count = len(orders)
+            cs.successful_orders = sum(1 for order in orders if order.get("success"))
             cs.holds = sum(1 for o in orders if o.get("action") == "HOLD")
             cs.supports = sum(1 for o in orders if o.get("action") == "SUPPORT")
+            cs.moves = sum(1 for o in orders if o.get("action") == "MOVE")
+            cs.support_holds = sum(
+                1 for o in orders
+                if o.get("action") == "SUPPORT" and " - " not in (o.get("to") or "")
+            )
+            cs.support_attacks = sum(
+                1 for o in orders
+                if o.get("action") == "SUPPORT" and " - " in (o.get("to") or "")
+            )
+            cs.detailed_order_outcomes = True
+            cs.successful_defensive_orders = sum(
+                1 for o in orders
+                if o.get("success") and (
+                    o.get("action") == "HOLD"
+                    or (o.get("action") == "SUPPORT" and " - " not in (o.get("to") or ""))
+                )
+            )
+            cs.successful_offensive_orders = sum(
+                1 for o in orders
+                if o.get("success") and (
+                    o.get("action") == "MOVE"
+                    or (o.get("action") == "SUPPORT" and " - " in (o.get("to") or ""))
+                )
+            )
+            center_moves = [
+                order for order in orders
+                if order.get("action") == "MOVE"
+                and order.get("to") in STARTING_SUPPLY_CENTERS
+                and previous_sc_owners.get(order["to"], "") != country
+            ]
+            cs.center_targets = len(center_moves)
+            cs.successful_center_attacks = sum(1 for order in center_moves if order.get("success"))
+            cs.allied_supports = sum(
+                1 for order in orders
+                if order.get("action") == "SUPPORT"
+                and unit_country_by_source.get((order.get("to") or "").split()[0]) not in (None, country)
+            )
+            threatened_centers = {
+                order.get("to")
+                for enemy_country, enemy_orders in movement_orders.items()
+                if enemy_country != country
+                for order in enemy_orders
+                if order.get("action") == "MOVE"
+                and order.get("to") in owned_scs
+            }
+            cs.threatened_centers = len(threatened_centers)
+            defended_centers = {
+                order.get("from") for order in orders
+                if order.get("action") == "HOLD" and order.get("from") in threatened_centers
+            }
+            defended_centers.update(
+                (order.get("to") or "").split()[0]
+                for order in orders
+                if order.get("action") == "SUPPORT"
+                and " - " not in (order.get("to") or "")
+                and (order.get("to") or "").split()[0] in threatened_centers
+            )
+            cs.defended_threatened_centers = len(defended_centers)
+            front_unit_counts = {}
+            for unit in units:
+                front_id = PROVINCE_DATA.get(unit.province, {}).get("front_id")
+                if front_id:
+                    front_unit_counts[front_id] = front_unit_counts.get(front_id, 0) + 1
+            cs.front_concentration = (
+                max(front_unit_counts.values()) / len(units)
+                if front_unit_counts and units else 0.0
+            )
 
             # Geography metrics
             hostile = [c for c in sc_owners.values() if c not in ("", "Neutral", country)]
@@ -199,14 +301,12 @@ def build_game_timeline(season_data):
         timeline.add_season_states(year, season, country_states)
         timeline.board_states[(year, season)] = board
 
-        # --- 7. Compute momentum/EMA/CGI using previous season ---
-        if previous_country_states:
-            histories = {}
-            for cs in country_states:
-                previous = previous_country_states.get(cs.country)
-                if previous is not None:
-                    histories[cs.country] = [previous, cs]
-            metrics_engine.compute_metrics_by_country(histories)
+        # --- 7. Derive normalized board features and historical metrics ---
+        histories = {}
+        for cs in country_states:
+            previous = previous_country_states.get(cs.country)
+            histories[cs.country] = [previous, cs] if previous is not None else [cs]
+        metrics_engine.compute_metrics_by_country(histories)
 
         # Update continuity
         previous_board = board

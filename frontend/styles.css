@@ -540,86 +540,85 @@ input[type="number"] {
 .legend-swatch.russia { background: var(--russia); }
 
 .warboard-grid {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 0.55rem;
-  min-height: 290px;
-  background: rgba(9, 14, 17, 0.8);
+  position: relative;
+  min-height: 420px;
+  overflow: hidden;
+  background: #303a55;
   border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 12px;
-  padding: 0.9rem;
+  border-radius: 8px;
+  isolation: isolate;
 }
 
-.province-tile {
+.diplomacy-map,
+.map-overlay {
   position: relative;
-  min-height: 42px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.22);
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.diplomacy-map {
+  min-height: 420px;
+  background: #303a55;
+}
+
+.map-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.map-sc,
+.map-unit,
+.map-front {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.map-sc {
+  width: 0.82rem;
+  height: 0.82rem;
+  border-radius: 50%;
+  border: 2px solid rgba(7, 11, 18, 0.9);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+.map-sc.selected-province {
+  width: 1.12rem;
+  height: 1.12rem;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(215, 180, 109, 0.32), 0 0 14px rgba(215, 180, 109, 0.75);
+}
+
+.map-unit {
+  z-index: 2;
+  pointer-events: auto;
+  width: 1.55rem;
+  height: 1.55rem;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid #111820;
+  color: #101820;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  font-size: 0.7rem;
-  letter-spacing: 0.06rem;
-  color: rgba(10, 12, 15, 0.85);
-  font-weight: 700;
-  padding: 0.2rem;
-  overflow: hidden;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
-}
-
-.province-tile.selected {
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.7), 0 0 22px rgba(215,180,109,0.45);
-}
-
-.province-tile.front-zone {
-  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.2), 0 0 18px rgba(108, 200, 138, 0.28);
-  filter: saturate(1.18);
-}
-
-.province-tile.conflict-zone {
-  box-shadow: inset 0 0 0 2px rgba(255, 126, 126, 0.55), 0 0 18px rgba(215, 123, 109, 0.35);
-  filter: saturate(1.2);
-}
-
-.province-tile .center-dot {
-  position: absolute;
-  width: 0.44rem;
-  height: 0.44rem;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.45);
-  right: 0.35rem;
-  bottom: 0.35rem;
-}
-
-.province-tile .unit-badge,
-.province-tile .front-badge {
-  position: absolute;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.1rem;
-  height: 1.1rem;
-  padding: 0 0.2rem;
-  border-radius: 999px;
-  font-size: 0.58rem;
+  font-size: 0.72rem;
   font-weight: 800;
-  line-height: 1;
-  border: 1px solid rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.52);
 }
 
-.province-tile .unit-badge {
-  top: 0.25rem;
-  left: 0.25rem;
-  background: rgba(9, 14, 17, 0.7);
-  color: #f4f7fb;
+.map-unit.selected-unit {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(215, 180, 109, 0.38), 0 2px 7px rgba(0, 0, 0, 0.65);
 }
 
-.province-tile .front-badge {
-  right: 0.8rem;
-  bottom: 0.2rem;
-  background: rgba(215, 123, 109, 0.85);
-  color: #fff;
+.map-front {
+  z-index: 1;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 2px solid rgba(215, 123, 109, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(215, 123, 109, 0.65);
 }
 
 .english { background: var(--england); }

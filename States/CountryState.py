@@ -13,9 +13,38 @@ class CountryState:
         self.units = units
         self.builds = builds
 
+        # Board-derived inputs
+        self.order_count = 0
+        self.successful_orders = 0
+        self.order_success_rate = 0.0
+        self.moves = 0
+        self.support_holds = 0
+        self.support_attacks = 0
+        self.successful_defensive_orders = 0
+        self.successful_offensive_orders = 0
+        self.detailed_order_outcomes = False
+        self.unit_utilization = 0.0
+        self.defensive_posture = 0.0
+        self.offensive_posture = 0.0
+        self.posture_balance = 0.0
+        self.posture = "Inactive"
+        self.unit_efficiency = 0.0
+        self.center_targets = 0
+        self.successful_center_attacks = 0
+        self.center_conversion_rate = 0.0
+        self.threatened_centers = 0
+        self.defended_threatened_centers = 0
+        self.threat_coverage_rate = 0.0
+        self.front_concentration = 0.0
+        self.allied_supports = 0
+        self.allied_support_rate = 0.0
+        self.unit_sc_ratio = 0.0
+        self.board_control = 0.0
+
         # Derived Metrics
         self.sc_gains = 0
         self.unit_growth = 0
+        self.build_efficiency = 0.0
         self.build_effeciency = 0
         self.momentum = 0
         self.ema_momentum = 0
@@ -32,6 +61,8 @@ class CountryState:
         self.support_rate = 0
         self.isolation = 0
         self.encirclement = 0
+        self.operational_efficiency = 0.0
+        self.strategic_position = 0.0
 
     def __repr__(self):
         return f"CountryState {self.country} {self.year} {self.season}: Supply Centers={self.sc}, Units={self.units}"

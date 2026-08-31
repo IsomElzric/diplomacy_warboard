@@ -1,6 +1,24 @@
 import random
 
 
+PREDICTIVE_WEIGHTS = {
+    "sc": 2.0,
+    "units": 0.9,
+    "strategic_position": 18.0,
+    "operational_efficiency": 2.0,
+    "center_conversion_rate": 2.5,
+    "threat_coverage_rate": 1.5,
+    "front_concentration": 1.0,
+    "allied_support_rate": 0.5,
+    "cgi": 4.0,
+    "ema_momentum": 1.6,
+    "momentum": 1.2,
+    "unit_growth": 0.8,
+    "isolation": -2.0,
+    "encirclement": -3.0,
+}
+
+
 class MonteCarloEngine:
     """
     Win-probability forecast based on the full strategic state of each country.
@@ -10,19 +28,20 @@ class MonteCarloEngine:
 
     def _score_country_state(self, state):
         return (
-            (state.sc * 2.0) +
-            (state.units * 0.9) +
-            (state.cgi * 7.0) +
-            (state.momentum * 2.2) +
-            (state.ema_momentum * 1.8) +
-            (getattr(state, "growth_rate", 0) * 5.0) +
-            (getattr(state, "unit_growth", 0) * 1.5) +
-            (state.active_fronts * 0.9) +
-            (getattr(state, "holds", 0) * 0.8) +
-            (getattr(state, "supports", 0) * 0.9) +
-            (getattr(state, "build_effeciency", 0) * 2.5)
-            - (state.isolation * 3.0)
-            - (state.encirclement * 3.5)
+            state.sc * PREDICTIVE_WEIGHTS["sc"]
+            + state.units * PREDICTIVE_WEIGHTS["units"]
+            + getattr(state, "strategic_position", 0) * PREDICTIVE_WEIGHTS["strategic_position"]
+            + getattr(state, "operational_efficiency", 0) * PREDICTIVE_WEIGHTS["operational_efficiency"]
+            + getattr(state, "center_conversion_rate", 0) * PREDICTIVE_WEIGHTS["center_conversion_rate"]
+            + getattr(state, "threat_coverage_rate", 0) * PREDICTIVE_WEIGHTS["threat_coverage_rate"]
+            + getattr(state, "front_concentration", 0) * PREDICTIVE_WEIGHTS["front_concentration"]
+            + getattr(state, "allied_support_rate", 0) * PREDICTIVE_WEIGHTS["allied_support_rate"]
+            + state.cgi * PREDICTIVE_WEIGHTS["cgi"]
+            + state.ema_momentum * PREDICTIVE_WEIGHTS["ema_momentum"]
+            + state.momentum * PREDICTIVE_WEIGHTS["momentum"]
+            + getattr(state, "unit_growth", 0) * PREDICTIVE_WEIGHTS["unit_growth"]
+            + state.isolation * PREDICTIVE_WEIGHTS["isolation"]
+            + state.encirclement * PREDICTIVE_WEIGHTS["encirclement"]
         )
 
     def simulate(self, game_state, iterations=100):

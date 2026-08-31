@@ -74,17 +74,72 @@ def parse_uploaded_game_text(text):
     return blocks
 
 
+def merge_uploaded_game_text(existing_text, new_text, year=None, season="Spring"):
+    """Combine persisted game text with newly uploaded orders while replacing duplicate season blocks."""
+    if not existing_text and not new_text:
+        return ""
+
+    existing_blocks = parse_uploaded_game_text(normalize_order_text(existing_text or ""))
+    new_blocks = parse_uploaded_game_text(normalize_order_text(new_text or ""))
+
+    if not new_blocks and new_text and new_text.strip():
+        target_year = int(year) if year is not None else 1901
+        target_season = str(season or "Spring").title()
+        new_blocks = [(target_year, target_season, normalize_order_text(new_text))]
+
+    ordered = {}
+    for year_value, season_name, block in existing_blocks + new_blocks:
+        ordered[(int(year_value), str(season_name).title())] = block
+
+    season_order = ["Spring", "Summer", "Fall", "Winter"]
+    merged_blocks = [
+        (year_value, season_name, block)
+        for (year_value, season_name), block in sorted(
+            ordered.items(),
+            key=lambda item: (
+                item[0][0],
+                season_order.index(item[0][1]) if item[0][1] in season_order else len(season_order),
+            ),
+        )
+    ]
+
+    if not merged_blocks:
+        return ""
+
+    return "\n\n".join(
+        f"{season_name} {year_value}\n{block}".strip()
+        for year_value, season_name, block in merged_blocks
+    )
+
+
 def set_active_game_timeline(game_timeline):
     global ACTIVE_GAME_TIMELINE
     ACTIVE_GAME_TIMELINE = game_timeline
 
 
-def build_uploaded_payload(text, year=1901, season="Spring", mode="season"):
+def build_uploaded_payload(text, year=1901, season="Spring", mode="season", existing_text=None):
     if not text or not text.strip():
         raise ValueError("Order text is required.")
 
     reset_supply_centers()
     cleaned_text = normalize_order_text(text)
+
+    if existing_text and existing_text.strip():
+        cleaned_text = merge_uploaded_game_text(existing_text, cleaned_text, year=year, season=season)
+
+    if not cleaned_text or not cleaned_text.strip():
+        raise ValueError("Order text is required.")
+
+    if mode == "full" or (existing_text and existing_text.strip()):
+        blocks = parse_uploaded_game_text(cleaned_text)
+        if not blocks:
+            raise ValueError("No valid season blocks were found in the uploaded game text.")
+        selected_year, selected_season = blocks[-1][0], blocks[-1][1]
+        game_timeline = build_game_timeline(blocks)
+        set_active_game_timeline(game_timeline)
+        payload = DashboardPayloadBuilder.build(game_timeline, selected_year, selected_season)
+        payload["savedGameText"] = cleaned_text
+        return payload
 
     if mode == "full":
         blocks = parse_uploaded_game_text(cleaned_text)
@@ -93,13 +148,17 @@ def build_uploaded_payload(text, year=1901, season="Spring", mode="season"):
         selected_year, selected_season = blocks[-1][0], blocks[-1][1]
         game_timeline = build_game_timeline(blocks)
         set_active_game_timeline(game_timeline)
-        return DashboardPayloadBuilder.build(game_timeline, selected_year, selected_season)
+        payload = DashboardPayloadBuilder.build(game_timeline, selected_year, selected_season)
+        payload["savedGameText"] = cleaned_text
+        return payload
 
     season_year = int(year) if year is not None else 1901
     season_name = season or "Spring"
     game_timeline = build_game_timeline([(season_year, season_name, cleaned_text)])
     set_active_game_timeline(game_timeline)
-    return DashboardPayloadBuilder.build(game_timeline, season_year, season_name)
+    payload = DashboardPayloadBuilder.build(game_timeline, season_year, season_name)
+    payload["savedGameText"] = cleaned_text
+    return payload
 
 
 def build_dashboard_payload(year=1901, season="Spring"):
@@ -185,12 +244,19 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 data = {}
 
             text = (data.get("text") or "").strip()
+            existing_text = (data.get("existing_text") or "").strip()
             year = data.get("year")
             season = data.get("season")
             mode = (data.get("mode") or "season").lower()
 
             try:
-                payload = build_uploaded_payload(text=text, year=year, season=season, mode=mode)
+                payload = build_uploaded_payload(
+                    text=text,
+                    year=year,
+                    season=season,
+                    mode=mode,
+                    existing_text=existing_text,
+                )
             except ValueError as exc:
                 body = json.dumps({"error": str(exc)}).encode("utf-8")
                 self.send_response(400)

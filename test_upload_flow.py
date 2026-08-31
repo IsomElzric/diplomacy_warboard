@@ -1,6 +1,11 @@
 import unittest
 
-from dashboard_server import build_dashboard_payload, build_uploaded_payload, parse_uploaded_game_text
+from dashboard_server import (
+    build_dashboard_payload,
+    build_uploaded_payload,
+    merge_uploaded_game_text,
+    parse_uploaded_game_text,
+)
 
 
 class UploadFlowTests(unittest.TestCase):
@@ -54,6 +59,47 @@ F ENG - MAO  SUCCEEDS
 
         self.assertIn("Austria", payload["countries"])
         self.assertIn("England", payload["countries"])
+
+    def test_merge_uploaded_game_text_keeps_previous_seasons_and_replaces_duplicate_season_entries(self):
+        existing = """
+Spring 1901
+England
+F Edi - NTH  SUCCEEDS
+
+Fall 1901
+England
+F Edi - NTH  SUCCEEDS
+"""
+        new = """
+Winter 1901
+England
+F Edi - NTH  SUCCEEDS
+"""
+
+        merged = merge_uploaded_game_text(existing, new, year=1901, season="Winter")
+
+        self.assertIn("Spring 1901", merged)
+        self.assertIn("Fall 1901", merged)
+        self.assertIn("Winter 1901", merged)
+
+        duplicate_existing = """
+Spring 1901
+England
+A Lvp - Yor  SUCCEEDS
+"""
+        duplicate_merged = merge_uploaded_game_text(
+            duplicate_existing,
+            """
+Spring 1901
+England
+F Edi - NTH  SUCCEEDS
+""",
+            year=1901,
+            season="Spring",
+        )
+
+        self.assertIn("F Edi - NTH  SUCCEEDS", duplicate_merged)
+        self.assertNotIn("A Lvp - Yor  SUCCEEDS", duplicate_merged)
 
     def test_historical_season_lookup_returns_saved_game_data(self):
         text = """
