@@ -1336,6 +1336,69 @@ async function restoreSavedGameState() {
   }
 }
 
+function startNewWarboard() {
+  state.gameText = '';
+  state.selectedCountry = null;
+  state.selectedSeason = null;
+  localStorage.removeItem('warboard-saved-game-text');
+  document.getElementById('upload-text').value = '';
+  document.getElementById('upload-year').value = '1901';
+  document.getElementById('upload-season').value = 'Spring';
+  renderDashboard({ selectedSeason: null, countries: {} });
+  const status = document.getElementById('upload-status');
+  status.textContent = 'New Warboard ready for Spring 1901 orders.';
+  status.classList.remove('error');
+}
+
+function saveWarboard() {
+  const status = document.getElementById('upload-status');
+  if (!state.gameText.trim()) {
+    status.textContent = 'Load at least one season before saving.';
+    status.classList.add('error');
+    return;
+  }
+
+  const file = new Blob([state.gameText], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(file);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'diplomacy-warboard-orders.txt';
+  link.click();
+  URL.revokeObjectURL(url);
+  status.textContent = 'Warboard history saved.';
+  status.classList.remove('error');
+}
+
+async function loadSavedWarboard(event) {
+  const [file] = event.target.files;
+  if (!file) return;
+
+  const status = document.getElementById('upload-status');
+  try {
+    const text = await file.text();
+    if (!text.trim()) throw new Error('The selected save file is empty.');
+    status.textContent = 'Loading saved Warboard...';
+    status.classList.remove('error');
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, mode: 'full' }),
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload?.error || 'Saved Warboard could not be loaded.');
+    state.gameText = payload.savedGameText || text;
+    localStorage.setItem('warboard-saved-game-text', state.gameText);
+    document.getElementById('upload-text').value = '';
+    renderDashboard(payload);
+    status.textContent = `Loaded ${payload.availableSeasons?.length ?? 0} saved seasons.`;
+  } catch (error) {
+    status.textContent = error.message || 'Saved Warboard could not be loaded.';
+    status.classList.add('error');
+  } finally {
+    event.target.value = '';
+  }
+}
+
 function bindUploadControls() {
   const uploadMode = document.getElementById('upload-mode');
   const uploadYear = document.getElementById('upload-year');
@@ -1354,6 +1417,9 @@ function bindUploadControls() {
   });
 
   document.getElementById('upload-submit').addEventListener('click', submitUploadedOrders);
+  document.getElementById('new-warboard').addEventListener('click', startNewWarboard);
+  document.getElementById('save-warboard').addEventListener('click', saveWarboard);
+  document.getElementById('load-warboard').addEventListener('change', loadSavedWarboard);
 
   uploadPanel.classList.add('collapsed');
 }

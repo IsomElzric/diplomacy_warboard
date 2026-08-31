@@ -177,6 +177,41 @@ input[type="number"] {
   font-weight: 600;
 }
 
+.game-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+  margin-top: 0.5rem;
+}
+
+.secondary-action {
+  min-height: 2.3rem;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 5px;
+  background: rgba(255,255,255,0.035);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.7rem;
+  letter-spacing: 0.08rem;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.secondary-action:hover {
+  border-color: var(--gold);
+  color: var(--text);
+}
+
+.load-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.load-action input {
+  display: none;
+}
+
 .upload-status {
   margin-top: 0.75rem;
   min-height: 1.2rem;
