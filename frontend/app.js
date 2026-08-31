@@ -816,6 +816,91 @@ function renderCountryTrendChart(country, payload) {
   `;
 }
 
+function renderScControlChart(payload) {
+  const chart = document.getElementById('sc-control-chart');
+  const countries = getCountryEntries(payload);
+  const totalCenters = 34;
+  const controlled = countries.reduce((total, [, data]) => total + Number(data.current?.sc ?? 0), 0);
+  let cursor = 0;
+  const segments = countries.map(([country, data]) => {
+    const share = (Number(data.current?.sc ?? 0) / totalCenters) * 100;
+    const color = `var(--${country.toLowerCase()})`;
+    const segment = `${color} ${cursor}% ${cursor + share}%`;
+    cursor += share;
+    return segment;
+  });
+  if (cursor < 100) segments.push(`rgba(255,255,255,0.12) ${cursor}% 100%`);
+
+  chart.innerHTML = `
+    <div class="sc-donut" style="background:conic-gradient(${segments.join(', ')})">
+      <div><strong>${controlled}</strong><span>of ${totalCenters} SCs</span></div>
+    </div>
+    <div class="sc-legend">
+      ${countries.map(([country, data]) => `<button class="sc-legend-row" data-country="${country}"><i class="legend-swatch ${countryPalette[country]}"></i><span>${country}</span><strong>${data.current?.sc ?? 0}</strong></button>`).join('')}
+    </div>
+  `;
+  chart.querySelectorAll('[data-country]').forEach((button) => {
+    button.addEventListener('click', () => {
+      state.selectedCountry = button.dataset.country;
+      renderDashboard(payload);
+    });
+  });
+}
+
+function renderPositionScatterChart(payload) {
+  const chart = document.getElementById('position-scatter-chart');
+  const countries = getCountryEntries(payload);
+  const maxSc = Math.max(1, ...countries.map(([, data]) => Number(data.current?.sc ?? 0)));
+  const maxPosition = Math.max(0.01, ...countries.map(([, data]) => Number(data.current?.strategic_position ?? 0)));
+
+  chart.innerHTML = `
+    <span class="scatter-axis scatter-y">Position</span>
+    <span class="scatter-axis scatter-x">Supply centers</span>
+    <div class="scatter-grid"></div>
+    ${countries.map(([country, data]) => {
+      const current = data.current ?? {};
+      const left = 8 + (Number(current.sc ?? 0) / maxSc) * 84;
+      const bottom = 8 + (Number(current.strategic_position ?? 0) / maxPosition) * 76;
+      const size = 1.25 + (computeProjectedWinChance(country, payload) / 100) * 1.2;
+      return `<button class="scatter-point ${countryPalette[country]}${country === state.selectedCountry ? ' selected-point' : ''}" data-country="${country}" style="left:${left}%;bottom:${bottom}%;width:${size}rem;height:${size}rem" title="${country}: ${current.sc ?? 0} SCs, position ${formatNumber(current.strategic_position ?? 0)}">${country.slice(0, 2)}</button>`;
+    }).join('')}
+  `;
+  chart.querySelectorAll('[data-country]').forEach((button) => {
+    button.addEventListener('click', () => {
+      state.selectedCountry = button.dataset.country;
+      renderDashboard(payload);
+    });
+  });
+}
+
+function renderPostureMatrix(payload) {
+  const matrix = document.getElementById('posture-matrix');
+  const countries = getCountryEntries(payload);
+  const seasons = getAvailableSeasons(payload)
+    .filter((entry) => isOnOrBeforeSelectedSeason(entry, payload.selectedSeason));
+  if (!seasons.length) {
+    matrix.innerHTML = '<div class="empty-state">No posture history available.</div>';
+    return;
+  }
+
+  const postureClass = {
+    Defensive: 'posture-defensive', 'Mixed-Defense': 'posture-mixed-defense', Balanced: 'posture-balanced',
+    'Mixed-Offense': 'posture-mixed-offense', Aggressive: 'posture-aggressive', Inactive: 'posture-inactive',
+  };
+  matrix.style.setProperty('--season-count', seasons.length);
+  matrix.innerHTML = `
+    <div class="posture-row posture-header"><span>Country</span>${seasons.map((entry) => `<span>${entry.season.slice(0, 3)} ${String(entry.year).slice(2)}</span>`).join('')}</div>
+    ${countries.map(([country]) => {
+      const history = selectedHistory(country, payload);
+      return `<div class="posture-row"><strong>${country}</strong>${seasons.map((season) => {
+        const snapshot = history.find((entry) => Number(entry.year) === Number(season.year) && entry.season === season.season);
+        const posture = snapshot?.posture ?? 'Inactive';
+        return `<button class="posture-cell ${postureClass[posture]}" title="${country}, ${season.season} ${season.year}: ${posture}">${posture === 'Inactive' ? '-' : posture.replace('Mixed-', '')}</button>`;
+      }).join('')}</div>`;
+    }).join('')}
+  `;
+}
+
 function computeProjectedWinChance(country, payload) {
   if (!payload) return 0;
 
@@ -1114,6 +1199,9 @@ function renderDashboard(payload) {
     document.getElementById('country-table-body').innerHTML = '<tr><td colspan="6" class="empty-table">No countries available yet.</td></tr>';
     document.getElementById('momentum-chart').innerHTML = '<div class="empty-state">No data loaded.</div>';
     document.getElementById('country-trend-chart').innerHTML = '<div class="empty-state">No trend history loaded.</div>';
+    document.getElementById('sc-control-chart').innerHTML = '<div class="empty-state">No supply-center data loaded.</div>';
+    document.getElementById('position-scatter-chart').innerHTML = '<div class="empty-state">No positional data loaded.</div>';
+    document.getElementById('posture-matrix').innerHTML = '<div class="empty-state">No posture history loaded.</div>';
     renderWarboard(null);
     return;
   }
@@ -1125,6 +1213,9 @@ function renderDashboard(payload) {
 
   renderSummaryTable(normalizedPayload);
   renderMomentumChart(normalizedPayload);
+  renderScControlChart(normalizedPayload);
+  renderPositionScatterChart(normalizedPayload);
+  renderPostureMatrix(normalizedPayload);
   renderWarboard(activeCountry);
   renderCountryFocus(activeCountry, normalizedPayload);
   renderCountryTrendChart(activeCountry, normalizedPayload);
