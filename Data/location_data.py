@@ -112,6 +112,25 @@ SEA_PROVINCES = {
     "IRI", "LYO", "MAO", "NAO", "NTH", "NWG", "SKA", "TYS", "WES",
 }
 
+THEATER_PROVINCES = {
+    "North Atlantic": {
+        "Cly", "Edi", "Lvp", "Yor", "Wal", "Lon", "Nwy", "Swe", "Fin", "Stp",
+        "Den", "Hol", "Bel", "Kie", "Ber", "Pru", "Lvn", "NAO", "NWG", "BAR",
+        "NTH", "SKA", "HEL", "BAL", "BOT", "ENG", "IRI",
+    },
+    "Western Europe": {
+        "Pic", "Bre", "Par", "Bur", "Gas", "Mar", "Spa", "Por", "NAf", "MAO",
+        "WES", "LYO", "TYS", "Tun", "Pie", "Tus", "Rom", "Nap", "Apu",
+    },
+    "Central Europe": {
+        "Ruh", "Mun", "Sil", "Boh", "Tyr", "Vie", "Tri", "Bud", "Gal", "War",
+        "Ukr", "Ser", "Alb", "Gre", "ADR", "ION", "AEG",
+    },
+    "Eastern Mediterranean": {
+        "Mos", "Sev", "Rum", "Bul", "Con", "Smy", "Ank", "Arm", "Syr", "BLA", "EAS",
+    },
+}
+
 for province, neighbors in STANDARD_ADJACENCY.items():
     PROVINCE_DATA.setdefault(province, {"front_id": "", "coastal": False})["neighbors"] = neighbors
 
@@ -159,6 +178,41 @@ def get_legal_neighbors_for_unit(province, unit_type):
         )
 
     return []
+
+
+def compute_theater_metrics(units_by_province, sc_owners):
+    """Summarize the current board into stable, player-readable strategic theaters."""
+    units = units_by_province or {}
+    owners = sc_owners or {}
+    result = []
+    for theater, provinces in THEATER_PROVINCES.items():
+        theater_units = {
+            province: unit for province, unit in units.items()
+            if province.split("/")[0] in provinces
+        }
+        powers = sorted({unit.country for unit in theater_units.values()})
+        centers = {
+            province: owner for province, owner in owners.items()
+            if province.split("/")[0] in provinces
+        }
+        hostile_borders = sum(
+            1 for province, unit in theater_units.items()
+            for neighbor in PROVINCE_GRAPH.get(province.split("/")[0], set())
+            if neighbor in theater_units
+            and theater_units[neighbor].country != unit.country
+        ) // 2
+        controlled_centers = {
+            country: sum(owner == country for owner in centers.values())
+            for country in powers
+        }
+        result.append({
+            "name": theater,
+            "powers": powers,
+            "units": len(theater_units),
+            "hostile_borders": hostile_borders,
+            "supply_centers": controlled_centers,
+        })
+    return result
 
 
 def compute_board_tactical_metrics(country, units_by_province, sc_owners):

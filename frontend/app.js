@@ -790,25 +790,24 @@ function isFrontTile(r, c, dynamicBoard, selectedCountry) {
 
 function renderSummaryTable(payload) {
   const body = document.getElementById('country-table-body');
-  const rows = getCountryEntries(payload).map(([country, data]) => {
+  const projections = payload.forecastDetails?.countries ?? {};
+  const rows = getCountryEntries(payload)
+    .sort(([left], [right]) => Number(projections[right]?.win_probability ?? 0) - Number(projections[left]?.win_probability ?? 0))
+    .map(([country, data]) => {
     const current = data.current ?? {};
-    const history = data.history ?? [];
-    const previous = history.length > 1 ? history[history.length - 2] : null;
-    const emaDirection = getTick(current.ema_momentum ?? 0, previous?.ema_momentum ?? 0);
-    const cgiDirection = getTick(current.cgi ?? 0, previous?.cgi ?? 0);
-    const scDirection = getTick(current.sc ?? 0, previous?.sc ?? 0);
-    const tick = scDirection === 'flat' && emaDirection === 'flat' && cgiDirection === 'flat'
-      ? 'flat'
-      : (scDirection === 'up' || emaDirection === 'up' || cgiDirection === 'up' ? 'up' : 'down');
+    const projection = projections[country] ?? {};
+    const probability = Number(projection.win_probability ?? payload.forecast?.[country] ?? current.win_probability ?? 0);
 
     return `
       <tr>
         <td class="country-name">${country}</td>
-        <td>${current.sc ?? 0}</td>
-        <td>${current.units ?? 0}</td>
-        <td>${formatNumber(current.ema_momentum ?? 0)}</td>
-        <td>${formatNumber(current.cgi ?? 0)}</td>
-        <td><span class="tick ${tick}">${getTickSymbol(tick)}</span></td>
+        <td>${round(probability * 100, 0)}%</td>
+        <td>${round(Number(projection.solo_probability ?? 0) * 100, 0)}%</td>
+        <td>${formatNumber(projection.expected_scs ?? current.sc ?? 0, 1)}</td>
+        <td>${formatNumber(projection.expected_units ?? current.units ?? 0, 1)}</td>
+        <td>${formatNumber(projection.expected_rank ?? 0, 1)}</td>
+        <td>${round(Number(projection.home_center_loss_probability ?? 0) * 100, 0)}%</td>
+        <td>${round(Number(projection.elimination_probability ?? 0) * 100, 0)}%</td>
       </tr>
     `;
   });
@@ -1019,23 +1018,13 @@ function getProjectedLeader(payload) {
 
 function renderGlobalOverview(payload) {
   const countries = getCountryEntries(payload);
-  const overviewFronts = document.getElementById('overview-fronts');
-  const overviewIsolation = document.getElementById('overview-isolation');
-  const overviewEncirclement = document.getElementById('overview-encirclement');
-  const overviewHolds = document.getElementById('overview-holds');
-  const overviewSupports = document.getElementById('overview-supports');
-  const overviewMomentum = document.getElementById('overview-momentum');
-  const overviewFactors = document.getElementById('overview-factors');
+  const warSituation = document.getElementById('war-situation');
+  const theaterGrid = document.getElementById('theater-grid');
   const stageReport = document.getElementById('global-stage-report');
 
   if (!countries.length) {
-    overviewFronts.textContent = '0';
-    overviewIsolation.textContent = '0.00';
-    overviewEncirclement.textContent = '0.00';
-    overviewHolds.textContent = '0';
-    overviewSupports.textContent = '0';
-    overviewMomentum.textContent = '0.00';
-    overviewFactors.innerHTML = '';
+    warSituation.innerHTML = '';
+    theaterGrid.innerHTML = '';
     stageReport.innerHTML = '<p>No historical game state is loaded.</p>';
     return;
   }
@@ -1056,13 +1045,6 @@ function renderGlobalOverview(payload) {
     ? forecastEntries.map(([country, details]) => ({ country, ...details })).sort((a, b) => b.elimination_probability - a.elimination_probability)[0]
     : fallbackProjection;
   const drawChance = round(Number(payload.forecastDetails?.draw_probability ?? 0) * 100, 0);
-
-  overviewFronts.textContent = forecastLeader.country;
-  overviewIsolation.textContent = `${round(Number(forecastLeader.win_probability ?? 0) * 100, 0)}%`;
-  overviewEncirclement.textContent = `${round(Number(bestSoloChance.solo_probability ?? 0) * 100, 0)}%`;
-  overviewHolds.textContent = `${drawChance}%`;
-  overviewSupports.textContent = `${formatNumber(topExpectedScs.expected_scs ?? 0, 1)} ${topExpectedScs.country}`;
-  overviewMomentum.textContent = `${round(Number(highestEliminationRisk.elimination_probability ?? 0) * 100, 0)}% ${highestEliminationRisk.country}`;
 
   const mostIsolated = countries
     .map(([country, data]) => ({ country, value: Number(data.current?.isolation ?? 0) }))
@@ -1111,25 +1093,50 @@ function renderGlobalOverview(payload) {
   const survivalRisk = mostAtRisk?.value
     ? `${mostAtRisk.country} faces the highest elimination risk at ${round(mostAtRisk.value * 100, 0)}%.`
     : 'No power is projected to be eliminated within the current horizon.';
+  const materialRanking = countries
+    .map(([country, data]) => ({ country, sc: Number(data.current?.sc ?? 0) }))
+    .sort((a, b) => b.sc - a.sc);
+  const challenger = materialRanking[1];
+  const theaters = payload.board?.theaters ?? [];
+  const hottestTheater = [...theaters]
+    .sort((a, b) => b.hostile_borders - a.hostile_borders || b.units - a.units)[0];
 
-  overviewFactors.innerHTML = `
-    <div class="overview-factor">
-      <strong>Front pressure</strong>
-      ${mostPressed ? `${mostPressed.country} is fighting on ${mostPressed.value} fronts, driving the broadest operational footprint.` : 'No active fronts recorded.'}
+  warSituation.innerHTML = `
+    <div class="situation-card">
+      <span>Balance Of Power</span>
+      <strong>${materialRanking[0]?.country ?? 'N/A'}</strong>
+      <p>${materialRanking[0]?.sc ?? 0} SCs${challenger ? `, ${Math.max(0, materialRanking[0].sc - challenger.sc)} ahead of ${challenger.country}` : ''}.</p>
     </div>
-    <div class="overview-factor">
-      <strong>Center security</strong>
-      ${mostExposed?.value ? `${mostExposed.country} has ${mostExposed.value} exposed supply ${mostExposed.value === 1 ? 'center' : 'centers'} without adjacent unit cover.` : 'Every threatened supply center currently has adjacent friendly coverage.'}
+    <div class="situation-card">
+      <span>Path To Solo</span>
+      <strong>${bestSoloChance.country}</strong>
+      <p>${round(Number(bestSoloChance.solo_probability ?? 0) * 100, 0)}% solo chance; ${formatNumber(topExpectedScs.expected_scs ?? 0, 1)} expected SCs.</p>
     </div>
-    <div class="overview-factor">
-      <strong>Leader</strong>
-      ${leader ? `${leader.country} remains the model favorite with ${round(getProjectedWinChance(leader.country, payload), 0)}% confidence and ${leader.sc} centers.` : 'No leader available.'}
+    <div class="situation-card">
+      <span>Critical Pressure</span>
+      <strong>${hottestTheater?.name ?? mostPressed.country}</strong>
+      <p>${hottestTheater ? `${hottestTheater.hostile_borders} contested borders across ${hottestTheater.units} units.` : `${mostPressed.country} holds the broadest active perimeter.`}</p>
     </div>
-    <div class="overview-factor">
-      <strong>Solo race</strong>
-      ${closestToSolo ? `${closestToSolo.country} is ${closestToSolo.value} supply ${closestToSolo.value === 1 ? 'center' : 'centers'} from the 18-center solo threshold.` : 'No solo-race data available.'}
+    <div class="situation-card">
+      <span>War Outlook</span>
+      <strong>${drawChance}% Draw Risk</strong>
+      <p>${highestEliminationRisk.country} carries the highest projected elimination risk.</p>
     </div>
   `;
+
+  theaterGrid.innerHTML = theaters.map((theater) => {
+    const centerControl = Object.entries(theater.supply_centers ?? {})
+      .filter(([, count]) => Number(count) > 0)
+      .map(([country, count]) => `${country} ${count}`)
+      .join(' · ');
+    return `
+      <article class="theater-card">
+        <div><span>${theater.name}</span><strong>${theater.hostile_borders} contested border${theater.hostile_borders === 1 ? '' : 's'}</strong></div>
+        <p>${theater.powers.length ? theater.powers.join(' / ') : 'No active forces'} · ${theater.units} units</p>
+        <small>${centerControl || 'No controlled supply centers'}</small>
+      </article>
+    `;
+  }).join('');
 
   stageReport.innerHTML = `
     <p>${leader.country} holds the present material lead with ${leader.sc} supply centers and ${leader.units} units. ${strongestTrajectory.country} has accumulated ${formatNumber(strongestTrajectory.value)} momentum through ${selectedLabel}, making ${strongestTrajectory.country === leader.country ? 'that lead' : 'its long-term trajectory'} the clearest strategic signal.</p>
@@ -1325,7 +1332,7 @@ function renderDashboard(payload) {
     document.getElementById('confidence-bar').style.width = '0%';
     document.getElementById('country-brief').textContent = 'Load orders to select a season and begin tracking the game.';
     document.getElementById('history-list').innerHTML = '<div class="history-item"><div>No history loaded</div></div>';
-    document.getElementById('country-table-body').innerHTML = '<tr><td colspan="6" class="empty-table">No countries available yet.</td></tr>';
+    document.getElementById('country-table-body').innerHTML = '<tr><td colspan="8" class="empty-table">No forecast data available yet.</td></tr>';
     document.getElementById('momentum-chart').innerHTML = '<div class="empty-state">No data loaded.</div>';
     document.getElementById('country-trend-chart').innerHTML = '<div class="empty-state">No trend history loaded.</div>';
     document.getElementById('sc-control-chart').innerHTML = '<div class="empty-state">No supply-center data loaded.</div>';

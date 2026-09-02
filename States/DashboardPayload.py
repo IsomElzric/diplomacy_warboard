@@ -1,5 +1,6 @@
 from States.GameState import GameState
 from Engines.MonteCarloEngine import MonteCarloEngine
+from Data.location_data import compute_theater_metrics
 
 
 class DashboardPayloadBuilder:
@@ -103,6 +104,10 @@ class DashboardPayloadBuilder:
                 for unit in (board.units_by_province.values() if board else [])
             ],
             "scOwners": (board.sc_owners.copy() if board else {}),
+            "theaters": compute_theater_metrics(
+                board.units_by_province if board else {},
+                board.sc_owners if board else {},
+            ),
         }
 
         return payload

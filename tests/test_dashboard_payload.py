@@ -45,6 +45,8 @@ class DashboardPayloadTests(unittest.TestCase):
         self.assertIn("England", payload["forecastDetails"]["countries"])
         self.assertIn("expected_scs", payload["forecastDetails"]["countries"]["England"])
         self.assertIn("draw_probability", payload["forecastDetails"])
+        self.assertEqual(len(payload["board"]["theaters"]), 4)
+        self.assertIn("North Atlantic", [theater["name"] for theater in payload["board"]["theaters"]])
 
 
 if __name__ == "__main__":

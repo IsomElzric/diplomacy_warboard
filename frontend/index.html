@@ -182,37 +182,14 @@ A Lvp - Yor SUCCEEDS
         <section class="panel-card strategic-overview">
           <div class="section-heading">
             <p class="mini-label">Global Overview</p>
-            <h3>Strategic Picture</h3>
+            <h3>State Of The War</h3>
           </div>
 
-          <div class="overview-grid">
-            <div class="overview-stat">
-              <span>Forecast Leader</span>
-              <strong id="overview-fronts">0</strong>
-            </div>
-            <div class="overview-stat">
-              <span>Lead Chance</span>
-              <strong id="overview-isolation">0.00</strong>
-            </div>
-            <div class="overview-stat">
-              <span>Solo Chance</span>
-              <strong id="overview-encirclement">0.00</strong>
-            </div>
-            <div class="overview-stat">
-              <span>Draw Risk</span>
-              <strong id="overview-holds">0</strong>
-            </div>
-            <div class="overview-stat">
-              <span>Top Expected SCs</span>
-              <strong id="overview-supports">0</strong>
-            </div>
-            <div class="overview-stat">
-              <span>Highest Elimination Risk</span>
-              <strong id="overview-momentum">0.00</strong>
-            </div>
+          <div id="war-situation" class="war-situation"></div>
+          <div class="theater-heading">
+            <p class="mini-label">Conflict Theaters</p>
           </div>
-
-          <div id="overview-factors" class="overview-factors"></div>
+          <div id="theater-grid" class="theater-grid"></div>
         </section>
 
         <section class="panel-card global-stage-report">
@@ -240,7 +217,7 @@ A Lvp - Yor SUCCEEDS
                   <th>SC / Units</th>
                   <th>Solo</th>
                   <th>Winter</th>
-                  <th>Orders</th>
+                  <th>Turn Result</th>
                   <th>Front</th>
                   <th>Center Risk</th>
                   <th>Home SCs</th>
@@ -273,19 +250,21 @@ A Lvp - Yor SUCCEEDS
         <section class="card-grid">
           <div class="panel-card wide-panel">
             <div class="section-heading">
-              <p class="mini-label">Comparison Table</p>
-              <h3>Current Position</h3>
+              <p class="mini-label">Forward Projection</p>
+              <h3>Forecast Outlook</h3>
             </div>
             <div class="table-wrap">
-              <table>
+              <table class="forecast-outlook-table">
                 <thead>
                   <tr>
-                    <th>Country</th>
-                    <th>SC</th>
-                    <th>Units</th>
-                    <th>EMA</th>
-                    <th>CGI</th>
-                    <th>Trend</th>
+                    <th>Power</th>
+                    <th>Win</th>
+                    <th>Solo</th>
+                    <th>Expected SCs</th>
+                    <th>Expected Units</th>
+                    <th>Expected Rank</th>
+                    <th>Home Loss</th>
+                    <th>Elimination</th>
                   </tr>
                 </thead>
                 <tbody id="country-table-body"></tbody>
