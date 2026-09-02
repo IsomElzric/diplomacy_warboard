@@ -107,6 +107,11 @@ STANDARD_ADJACENCY = {
     "EAS": ["ION", "AEG", "Smy", "Syr"], "BLA": ["Rum", "Bul", "Con", "Ank", "Arm", "Sev"],
 }
 
+SEA_PROVINCES = {
+    "ADR", "AEG", "BAL", "BAR", "BLA", "BOT", "EAS", "ENG", "HEL", "ION",
+    "IRI", "LYO", "MAO", "NAO", "NTH", "NWG", "SKA", "TYS", "WES",
+}
+
 for province, neighbors in STANDARD_ADJACENCY.items():
     PROVINCE_DATA.setdefault(province, {"front_id": "", "coastal": False})["neighbors"] = neighbors
 
@@ -136,6 +141,24 @@ def get_fronts_for_country(country, owned_provinces):
 
 def get_neighbors_for_province(province):
     return list(PROVINCE_GRAPH.get(province, set()))
+
+
+def get_legal_neighbors_for_unit(province, unit_type):
+    """Return strategic forecast destinations legal for an army or fleet."""
+    origin = (province or "").split("/")[0]
+    neighbors = PROVINCE_GRAPH.get(origin, set())
+    if unit_type == "A":
+        return sorted(neighbor for neighbor in neighbors if neighbor not in SEA_PROVINCES)
+
+    if unit_type == "F":
+        if origin not in SEA_PROVINCES and not PROVINCE_DATA.get(origin, {}).get("coastal"):
+            return []
+        return sorted(
+            neighbor for neighbor in neighbors
+            if neighbor in SEA_PROVINCES or PROVINCE_DATA.get(neighbor, {}).get("coastal")
+        )
+
+    return []
 
 
 def compute_board_tactical_metrics(country, units_by_province, sc_owners):

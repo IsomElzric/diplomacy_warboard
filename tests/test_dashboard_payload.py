@@ -1,8 +1,10 @@
 import unittest
 
 from States.CountryState import CountryState
+from States.BoardState import BoardState
 from States.DashboardPayload import DashboardPayloadBuilder
 from States.GameTimeline import GameTimeline
+from States.UnitState import UnitState
 
 
 class DashboardPayloadTests(unittest.TestCase):
@@ -27,6 +29,22 @@ class DashboardPayloadTests(unittest.TestCase):
         self.assertEqual(payload["selectedSeason"]["season"], "Spring")
         self.assertEqual(payload["countries"]["England"]["current"]["sc"], 3)
         self.assertEqual(len(payload["countries"]["England"]["history"]), 2)
+
+    def test_board_backed_payload_includes_detailed_simulation_forecast(self):
+        game_timeline = GameTimeline(1901, "Spring")
+        england = CountryState("England", year=1901, season="Spring", sc=1, units=1)
+        game_timeline.add_country_state("England", england)
+        board = BoardState(1901, "Spring")
+        board.add_unit(UnitState("England", "A", "Lon"))
+        board.sc_owners["Lon"] = "England"
+        game_timeline.add_board_state(1901, "Spring", board)
+
+        payload = DashboardPayloadBuilder.build(game_timeline, 1901, "Spring")
+
+        self.assertIn("forecastDetails", payload)
+        self.assertIn("England", payload["forecastDetails"]["countries"])
+        self.assertIn("expected_scs", payload["forecastDetails"]["countries"]["England"])
+        self.assertIn("draw_probability", payload["forecastDetails"])
 
 
 if __name__ == "__main__":

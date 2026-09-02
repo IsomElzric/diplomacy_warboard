@@ -98,7 +98,7 @@ This project expects country names as headers, followed by unit action lines tha
 Run the suite with:
 
 ```bash
-python -m unittest discover -p "test*.py"
+python -m unittest discover -s tests -p "test*.py"
 ```
 
 ## Deployment

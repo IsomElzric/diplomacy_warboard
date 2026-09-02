@@ -74,7 +74,20 @@ class DashboardPayloadBuilder:
 
             game_state.countries[country].__dict__.update(state)
 
-        payload["forecast"] = MonteCarloEngine().simulate(game_state, iterations=400)
+        forecast_engine = MonteCarloEngine()
+        if board and board.units_by_province:
+            payload["forecastDetails"] = forecast_engine.simulate_trials(game_state, iterations=400)
+            payload["forecast"] = {
+                country: details["win_probability"]
+                for country, details in payload["forecastDetails"]["countries"].items()
+            }
+        else:
+            payload["forecast"] = forecast_engine.simulate(game_state, iterations=400)
+            payload["forecastDetails"] = {
+                "countries": {},
+                "draw_probability": 0.0,
+                "terminal_reasons": {},
+            }
         for country, probability in payload["forecast"].items():
             if country in payload["countries"]:
                 payload["countries"][country]["current"]["forecast_score"] = probability
