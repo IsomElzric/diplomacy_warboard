@@ -140,7 +140,11 @@ def build_game_timeline(season_data):
                 for o in orders:
                     if o["from"] in retreat_sources:
                         continue
-                    prov = o["to"] if o.get("success") and o.get("to") else o["from"]
+                    prov = (
+                        o["to"]
+                        if o.get("action") == "MOVE" and o.get("success") and o.get("to")
+                        else o["from"]
+                    )
                     if prov and final_positions.get(prov) == country:
                         board.add_unit(UnitState(
                             country=country,

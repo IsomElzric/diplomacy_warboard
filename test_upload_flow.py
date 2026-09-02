@@ -187,6 +187,34 @@ Disband  SUCCEEDS
         russia = timeline.get_season_summary(1902, "Fall")["Russia"]
         self.assertEqual(russia.units, 1)
 
+    def test_successful_support_and_convoy_units_remain_on_the_board(self):
+        from main import build_game_timeline
+
+        timeline = build_game_timeline([
+            (1902, "Fall", """
+France
+F ENG C Pic - Lon  SUCCEEDS
+A Pic - Lon  SUCCEEDS
+Turkey
+A Sev S Ank - Arm  SUCCEEDS
+A Smy S Ank - Arm  SUCCEEDS
+A Ank - Arm  SUCCEEDS
+"""),
+        ])
+
+        board = timeline.get_board(1902, "Fall")
+        positions = {
+            (unit.country, unit.unit_type, unit.province)
+            for unit in board.units_by_province.values()
+        }
+        self.assertSetEqual(positions, {
+            ("France", "F", "ENG"),
+            ("France", "A", "Lon"),
+            ("Turkey", "A", "Sev"),
+            ("Turkey", "A", "Smy"),
+            ("Turkey", "A", "Arm"),
+        })
+
     def test_full_game_keeps_country_unit_totals_across_winter_builds(self):
         from main import build_game_timeline
 
