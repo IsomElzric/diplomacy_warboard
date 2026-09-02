@@ -1040,29 +1040,29 @@ function renderGlobalOverview(payload) {
     return;
   }
 
-  const totals = countries.reduce((acc, [, data]) => {
-    const current = data.current ?? {};
-    acc.fronts += Number(current.active_fronts ?? 0);
-    acc.isolation += Number(current.isolation ?? 0);
-    acc.encirclement += Number(current.encirclement ?? 0);
-    acc.holds += Number(current.holds ?? 0);
-    acc.supports += Number(current.supports ?? 0);
-    acc.momentum += Number(current.momentum ?? 0);
-    return acc;
-  }, { fronts: 0, isolation: 0, encirclement: 0, holds: 0, supports: 0, momentum: 0 });
-
   const leader = getProjectedLeader(payload);
-  const avgFronts = countries.length ? totals.fronts / countries.length : 0;
-  const avgIsolation = countries.length ? totals.isolation / countries.length : 0;
-  const avgEncirclement = countries.length ? totals.encirclement / countries.length : 0;
-  const avgMomentum = countries.length ? totals.momentum / countries.length : 0;
+  const forecastEntries = Object.entries(payload.forecastDetails?.countries ?? {});
+  const fallbackProjection = { country: leader?.country ?? 'N/A', win_probability: getProjectedWinChance(leader?.country, payload) / 100, solo_probability: 0, expected_scs: leader?.sc ?? 0, elimination_probability: 0 };
+  const forecastLeader = forecastEntries.length
+    ? forecastEntries.map(([country, details]) => ({ country, ...details })).sort((a, b) => b.win_probability - a.win_probability)[0]
+    : fallbackProjection;
+  const bestSoloChance = forecastEntries.length
+    ? forecastEntries.map(([country, details]) => ({ country, ...details })).sort((a, b) => b.solo_probability - a.solo_probability)[0]
+    : fallbackProjection;
+  const topExpectedScs = forecastEntries.length
+    ? forecastEntries.map(([country, details]) => ({ country, ...details })).sort((a, b) => b.expected_scs - a.expected_scs)[0]
+    : fallbackProjection;
+  const highestEliminationRisk = forecastEntries.length
+    ? forecastEntries.map(([country, details]) => ({ country, ...details })).sort((a, b) => b.elimination_probability - a.elimination_probability)[0]
+    : fallbackProjection;
+  const drawChance = round(Number(payload.forecastDetails?.draw_probability ?? 0) * 100, 0);
 
-  overviewFronts.textContent = round(avgFronts, 1);
-  overviewIsolation.textContent = round(avgIsolation, 2);
-  overviewEncirclement.textContent = round(avgEncirclement, 2);
-  overviewHolds.textContent = totals.holds;
-  overviewSupports.textContent = totals.supports;
-  overviewMomentum.textContent = round(avgMomentum, 2);
+  overviewFronts.textContent = forecastLeader.country;
+  overviewIsolation.textContent = `${round(Number(forecastLeader.win_probability ?? 0) * 100, 0)}%`;
+  overviewEncirclement.textContent = `${round(Number(bestSoloChance.solo_probability ?? 0) * 100, 0)}%`;
+  overviewHolds.textContent = `${drawChance}%`;
+  overviewSupports.textContent = `${formatNumber(topExpectedScs.expected_scs ?? 0, 1)} ${topExpectedScs.country}`;
+  overviewMomentum.textContent = `${round(Number(highestEliminationRisk.elimination_probability ?? 0) * 100, 0)}% ${highestEliminationRisk.country}`;
 
   const mostIsolated = countries
     .map(([country, data]) => ({ country, value: Number(data.current?.isolation ?? 0) }))
@@ -1102,7 +1102,6 @@ function renderGlobalOverview(payload) {
   const selectedLabel = payload.selectedSeason
     ? formatSeason(payload.selectedSeason.year, payload.selectedSeason.season)
     : 'the current board';
-  const drawChance = round(Number(payload.forecastDetails?.draw_probability ?? 0) * 100, 0);
   const mostAtRisk = countries
     .map(([country]) => ({
       country,

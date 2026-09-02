@@ -1,7 +1,7 @@
 import random
 from dataclasses import dataclass
 
-from Data.location_data import PROVINCE_DATA, get_legal_neighbors_for_unit
+from Data.location_data import SEA_PROVINCES, PROVINCE_DATA, get_legal_neighbors_for_unit
 from Data.supply_centers import STARTING_SUPPLY_CENTERS
 
 
@@ -161,8 +161,33 @@ class MonteCarloEngine:
                 return candidate
         return candidates[-1]
 
+    def _convoy_route(self, units, convoys, origin, destination):
+        """Return an unbroken convoy-fleet route for an army move, if one exists."""
+        convoy_fleets = {
+            province for province, intent in convoys.items()
+            if intent.get("convoy_from") == origin
+            and intent.get("convoy_to") == destination
+            and units[province].unit_type == "F"
+            and province in SEA_PROVINCES
+        }
+        starting_fleets = [
+            province for province in convoy_fleets
+            if origin in get_legal_neighbors_for_unit(province, "F")
+        ]
+        pending = [(province, [province]) for province in starting_fleets]
+        visited = set(starting_fleets)
+        while pending:
+            province, route = pending.pop(0)
+            if destination in get_legal_neighbors_for_unit(province, "F"):
+                return route
+            for neighbor in get_legal_neighbors_for_unit(province, "F"):
+                if neighbor in convoy_fleets and neighbor not in visited:
+                    visited.add(neighbor)
+                    pending.append((neighbor, route + [neighbor]))
+        return None
+
     def resolve_movement(self, simulation_state, intents):
-        """Resolve a simplified movement phase without convoys, retreats, or Winter changes."""
+        """Resolve a movement phase with supports and non-paradoxical convoy routes."""
         units = simulation_state.units_by_province
         normalized_intents = {
             province: {"action": "HOLD", "from": province}
@@ -172,11 +197,37 @@ class MonteCarloEngine:
             origin = intent.get("from")
             unit = units.get(origin)
             action = str(intent.get("action", "HOLD")).upper()
-            if not unit or action not in {"HOLD", "MOVE", "SUPPORT"}:
+            if not unit or action not in {"HOLD", "MOVE", "SUPPORT", "CONVOY"}:
                 continue
-            if action == "MOVE" and intent.get("to") not in get_legal_neighbors_for_unit(origin, unit.unit_type):
+            if (
+                action == "MOVE"
+                and not intent.get("via_convoy")
+                and intent.get("to") not in get_legal_neighbors_for_unit(origin, unit.unit_type)
+            ):
+                continue
+            if action == "CONVOY" and (
+                unit.unit_type != "F"
+                or origin not in SEA_PROVINCES
+                or not intent.get("convoy_from")
+                or not intent.get("convoy_to")
+            ):
                 continue
             normalized_intents[origin] = {**intent, "action": action, "from": origin}
+
+        convoys = {
+            origin: intent for origin, intent in normalized_intents.items()
+            if intent["action"] == "CONVOY"
+        }
+        convoy_routes = {}
+        for origin, intent in normalized_intents.items():
+            unit = units[origin]
+            if intent["action"] != "MOVE" or not intent.get("via_convoy"):
+                continue
+            route = self._convoy_route(units, convoys, origin, intent.get("to"))
+            if unit.unit_type != "A" or not route:
+                normalized_intents[origin] = {"action": "HOLD", "from": origin}
+            else:
+                convoy_routes[origin] = route
 
         moves = {
             origin: intent for origin, intent in normalized_intents.items()
@@ -192,10 +243,17 @@ class MonteCarloEngine:
             support_target = support.get("support_to") or support.get("to")
             support_origin = support.get("support_from")
             supporter_unit = units[supporter]
+            supported_intent = normalized_intents.get(support_origin, {})
             if not support_target or not support_origin:
                 cut_supports.add(supporter)
                 continue
             if support_target not in get_legal_neighbors_for_unit(supporter, supporter_unit.unit_type):
+                cut_supports.add(supporter)
+                continue
+            if support_target != support_origin and (
+                supported_intent.get("action") != "MOVE"
+                or supported_intent.get("to") != support_target
+            ):
                 cut_supports.add(supporter)
                 continue
             for attacker_origin, attack in moves.items():
@@ -213,33 +271,73 @@ class MonteCarloEngine:
             support_origin = support.get("support_from")
             support_target = support.get("support_to") or support.get("to")
             supported_unit = units.get(support_origin)
-            if not supported_unit or supported_unit.country != units[supporter].country:
+            if not supported_unit:
                 continue
             if support_target == support_origin:
                 hold_strengths[support_origin] += 1
             elif moves.get(support_origin, {}).get("to") == support_target:
                 move_strengths[support_origin] += 1
 
-        successful_moves = set()
         bounced_moves = set()
         destinations = {}
         for origin, move in moves.items():
             destinations.setdefault(move["to"], []).append(origin)
 
+        move_winners = {}
         for destination, attackers in destinations.items():
             strongest = max(move_strengths[origin] for origin in attackers)
             strongest_attackers = [origin for origin in attackers if move_strengths[origin] == strongest]
             if len(strongest_attackers) != 1:
                 bounced_moves.update(attackers)
                 continue
+            move_winners[destination] = strongest_attackers[0]
 
-            attacker_origin = strongest_attackers[0]
-            defender = units.get(destination)
-            defender_strength = hold_strengths.get(destination, 0)
-            if strongest > defender_strength:
-                successful_moves.add(attacker_origin)
+        resolution_cache = {}
+        resolving = set()
+
+        def move_succeeds(origin):
+            if origin in resolution_cache:
+                return resolution_cache[origin]
+            if origin in resolving:
+                return True
+
+            resolving.add(origin)
+            destination = moves[origin]["to"]
+            if move_winners.get(destination) != origin:
+                succeeds = False
             else:
-                bounced_moves.update(attackers)
+                defender = units.get(destination)
+                defender_move = moves.get(destination)
+                if not defender:
+                    succeeds = True
+                elif defender.country == units[origin].country:
+                    succeeds = bool(defender_move) and move_succeeds(destination)
+                elif not defender_move:
+                    succeeds = move_strengths[origin] > hold_strengths[destination]
+                elif defender_move["to"] == origin:
+                    succeeds = move_strengths[origin] > move_strengths[destination]
+                else:
+                    succeeds = move_succeeds(destination)
+
+            resolving.remove(origin)
+            resolution_cache[origin] = succeeds
+            return succeeds
+
+        successful_moves = {
+            origin for origin in moves
+            if move_succeeds(origin)
+        }
+        dislodged_fleet_origins = {
+            moves[origin]["to"] for origin in successful_moves
+            if moves[origin]["to"] in convoys
+            and units[moves[origin]["to"]].country != units[origin].country
+        }
+        disrupted_convoys = {
+            origin for origin, route in convoy_routes.items()
+            if any(fleet in dislodged_fleet_origins for fleet in route)
+        }
+        successful_moves -= disrupted_convoys
+        bounced_moves.update(set(moves) - successful_moves)
 
         final_state = simulation_state.copy()
         dislodged_units = {}

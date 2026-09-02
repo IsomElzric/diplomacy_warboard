@@ -195,6 +195,67 @@ class CountryTimelineAndMonteCarloTests(unittest.TestCase):
         self.assertIn("Lon", result.state.units_by_province)
         self.assertIn("Lvp", result.state.units_by_province)
 
+    def test_resolver_allows_successful_three_unit_movement_chain(self):
+        simulation = SimulationState(
+            1902,
+            "Spring",
+            {
+                "Par": SimulatedUnit("France", "A", "Par"),
+                "Bur": SimulatedUnit("France", "A", "Bur"),
+                "Mar": SimulatedUnit("France", "A", "Mar"),
+            },
+            {},
+        )
+
+        result = MonteCarloEngine().resolve_movement(simulation, [
+            {"action": "MOVE", "from": "Par", "to": "Bur"},
+            {"action": "MOVE", "from": "Bur", "to": "Mar"},
+            {"action": "MOVE", "from": "Mar", "to": "Spa"},
+        ])
+
+        self.assertSetEqual(result.successful_moves, {"Par", "Bur", "Mar"})
+        self.assertEqual(result.state.units_by_province["Bur"].province, "Bur")
+        self.assertEqual(result.state.units_by_province["Mar"].province, "Mar")
+        self.assertEqual(result.state.units_by_province["Spa"].province, "Spa")
+
+    def test_resolver_bounces_equal_strength_head_to_head_moves(self):
+        simulation = SimulationState(
+            1902,
+            "Spring",
+            {
+                "Par": SimulatedUnit("France", "A", "Par"),
+                "Bur": SimulatedUnit("Germany", "A", "Bur"),
+            },
+            {},
+        )
+
+        result = MonteCarloEngine().resolve_movement(simulation, [
+            {"action": "MOVE", "from": "Par", "to": "Bur"},
+            {"action": "MOVE", "from": "Bur", "to": "Par"},
+        ])
+
+        self.assertSetEqual(result.successful_moves, set())
+        self.assertSetEqual(result.bounced_moves, {"Par", "Bur"})
+
+    def test_resolver_does_not_allow_friendly_unit_dislodgement(self):
+        simulation = SimulationState(
+            1902,
+            "Spring",
+            {
+                "Par": SimulatedUnit("France", "A", "Par"),
+                "Bur": SimulatedUnit("France", "A", "Bur"),
+            },
+            {},
+        )
+
+        result = MonteCarloEngine().resolve_movement(simulation, [
+            {"action": "MOVE", "from": "Par", "to": "Bur"},
+        ])
+
+        self.assertSetEqual(result.successful_moves, set())
+        self.assertIn("Par", result.state.units_by_province)
+        self.assertIn("Bur", result.state.units_by_province)
+
     def test_resolver_uses_support_to_dislodge_holding_enemy(self):
         simulation = SimulationState(
             1902,
@@ -215,6 +276,70 @@ class CountryTimelineAndMonteCarloTests(unittest.TestCase):
         self.assertSetEqual(result.successful_moves, {"Bur"})
         self.assertEqual(result.state.units_by_province["Bel"].country, "France")
         self.assertEqual(result.dislodged_units["Bel"].country, "England")
+
+    def test_resolver_moves_army_through_contiguous_convoy_fleet(self):
+        simulation = SimulationState(
+            1902,
+            "Spring",
+            {
+                "Lon": SimulatedUnit("England", "A", "Lon"),
+                "ENG": SimulatedUnit("England", "F", "ENG"),
+            },
+            {},
+        )
+
+        result = MonteCarloEngine().resolve_movement(simulation, [
+            {"action": "MOVE", "from": "Lon", "to": "Bel", "via_convoy": True},
+            {"action": "CONVOY", "from": "ENG", "convoy_from": "Lon", "convoy_to": "Bel"},
+        ])
+
+        self.assertSetEqual(result.successful_moves, {"Lon"})
+        self.assertEqual(result.state.units_by_province["Bel"].country, "England")
+        self.assertIn("ENG", result.state.units_by_province)
+
+    def test_resolver_disrupts_convoy_when_convoying_fleet_is_dislodged(self):
+        simulation = SimulationState(
+            1902,
+            "Spring",
+            {
+                "Lon": SimulatedUnit("England", "A", "Lon"),
+                "ENG": SimulatedUnit("England", "F", "ENG"),
+                "MAO": SimulatedUnit("France", "F", "MAO"),
+                "Bre": SimulatedUnit("France", "F", "Bre"),
+            },
+            {},
+        )
+
+        result = MonteCarloEngine().resolve_movement(simulation, [
+            {"action": "MOVE", "from": "Lon", "to": "Bel", "via_convoy": True},
+            {"action": "CONVOY", "from": "ENG", "convoy_from": "Lon", "convoy_to": "Bel"},
+            {"action": "MOVE", "from": "MAO", "to": "ENG"},
+            {"action": "SUPPORT", "from": "Bre", "support_from": "MAO", "support_to": "ENG"},
+        ])
+
+        self.assertSetEqual(result.successful_moves, {"MAO"})
+        self.assertIn("Lon", result.state.units_by_province)
+        self.assertEqual(result.state.units_by_province["ENG"].country, "France")
+
+    def test_resolver_allows_valid_allied_support(self):
+        simulation = SimulationState(
+            1902,
+            "Spring",
+            {
+                "Bur": SimulatedUnit("France", "A", "Bur"),
+                "Pic": SimulatedUnit("Germany", "A", "Pic"),
+                "Bel": SimulatedUnit("England", "A", "Bel"),
+            },
+            {},
+        )
+
+        result = MonteCarloEngine().resolve_movement(simulation, [
+            {"action": "MOVE", "from": "Bur", "to": "Bel"},
+            {"action": "SUPPORT", "from": "Pic", "support_from": "Bur", "support_to": "Bel"},
+        ])
+
+        self.assertSetEqual(result.successful_moves, {"Bur"})
+        self.assertEqual(result.state.units_by_province["Bel"].country, "France")
 
     def test_retreat_resolver_preserves_dislodged_unit_in_legal_province(self):
         simulation = SimulationState(
