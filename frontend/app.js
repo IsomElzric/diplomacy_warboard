@@ -236,29 +236,21 @@ const provinceToGrid = {
   "Bel": [1, 3],
 };
 
-const mapProvincePositions = {
-  Cly: [25, 31], Edi: [31, 29], Lvp: [26, 36], Yor: [32, 36], Wal: [27, 41], Lon: [32, 43],
-  IRI: [20, 43], ENG: [34, 49], NTH: [38, 31], NWG: [28, 17], NAO: [15, 27], HEL: [43, 37],
-  Bel: [40, 48], Hol: [45, 43], Den: [46, 31], Kie: [48, 44], Ruh: [46, 51], Mun: [51, 54], Ber: [55, 43], Pru: [60, 43], Sil: [58, 51],
-  Pic: [37, 53], Bre: [31, 55], Par: [38, 59], Bur: [44, 59], Gas: [34, 65], Mar: [43, 70], Spa: [29, 72], Por: [21, 73], MAO: [21, 58], WES: [35, 76], LYO: [44, 76],
-  Nwy: [51, 19], Swe: [57, 26], Fin: [61, 23], Stp: [69, 15], BOT: [64, 28], BAL: [63, 36],
-  War: [66, 47], Mos: [76, 44], Ukr: [74, 54], Sev: [81, 57], Rum: [66, 62], BLA: [76, 66],
-  Vie: [57, 61], Bud: [63, 64], Gal: [63, 55], Tri: [56, 67], Ser: [62, 71], Alb: [56, 75], Gre: [61, 80], Bul: [69, 73], Con: [76, 75], Ank: [84, 72], Smy: [80, 82], Arm: [88, 68], Syr: [91, 80], AEG: [67, 82], ION: [53, 83], ADR: [51, 73],
-  Ven: [49, 68], Pie: [44, 67], Rom: [49, 77], Nap: [55, 80], Apu: [55, 76], Tus: [44, 75], TYS: [43, 84], Tun: [34, 88],
-};
-
-const provinceToSvgPath = {
-  Alb: 'polygon40', Bel: 'polygon78', Ber: 'polygon86', Bre: 'polygon106', Bud: 'polygon114',
-  Cly: 'polygon140', Den: 'polygon156', Gas: 'polygon198', Gre: 'polygon204', Hol: 'polygon230',
-  Lon: 'polygon274', Mar: 'polygon282', Mos: 'polygon296', Mun: 'polygon304', Par: 'polygon340',
-  Pic: 'polygon348', Pie: 'polygon354', Por: 'polygon360', Rom: 'polygon374', Ruh: 'polygon382',
-  Ser: 'polygon396', Sil: 'polygon412', Ukr: 'polygon504', Vie: 'polygon518', Wal: 'polygon526',
-  War: 'polygon532', Yor: 'polygon546', Arm: 'polygon60', Tun: 'polygon478', Tus: 'polygon486',
-};
-
 const mapFillColors = {
   England: '#4d7dff', France: '#74d8ff', Germany: '#dfe3e8', Italy: '#59c777',
   Austria: '#d64b4b', Turkey: '#f5d845', Russia: '#d93bcf', Neutral: '#d6d2bd', '': '#d6d2bd',
+};
+
+const svgProvinceAliases = {
+  MAO: 'mid',
+  NAO: 'nat',
+  NWG: 'nrg',
+};
+
+const splitCoastProvinces = {
+  Bul: ['bul/ec', 'bul/sc'],
+  Spa: ['spa/nc', 'spa/sc'],
+  Stp: ['stp/nc', 'stp/sc'],
 };
 
 const emptyPayload = {
@@ -663,56 +655,119 @@ function renderWarboard(country) {
   const scOwners = state.payload?.board?.scOwners ?? {};
   const selectedCountry = country || state.selectedCountry;
   const units = state.payload?.board?.units ?? [];
-  const ownerMarkers = Object.entries(scOwners)
-    .filter(([province]) => mapProvincePositions[province])
-    .map(([province, owner]) => {
-      const [left, top] = mapProvincePositions[province];
-      const selected = owner === selectedCountry ? ' selected-province' : '';
-      const className = countryPalette[owner] ?? 'neutral';
-      return `<span class="map-sc ${className}${selected}" style="left:${left}%;top:${top}%" title="${province}: ${owner || 'Neutral'} supply center"></span>`;
-    }).join('');
-
-  const unitMarkers = units
-    .filter((unit) => mapProvincePositions[unit.province])
-    .map((unit) => {
-      const [left, top] = mapProvincePositions[unit.province];
-      const selected = unit.country === selectedCountry ? ' selected-unit' : '';
-      const className = countryPalette[unit.country] ?? 'neutral';
-      return `<button class="map-unit ${className}${selected}" style="left:${left}%;top:${top}%" title="${unit.country} ${unit.unit_type} in ${unit.province}" aria-label="${unit.country} ${unit.unit_type} in ${unit.province}">${unit.unit_type}</button>`;
-    }).join('');
-
-  const frontMarkers = units
-    .filter((unit) => unit.country !== selectedCountry && mapProvincePositions[unit.province])
-    .filter((unit) => state.payload?.countries?.[unit.country]?.current?.active_fronts > 0)
-    .map((unit) => {
-      const [left, top] = mapProvincePositions[unit.province];
-      return `<span class="map-front" style="left:${left}%;top:${top}%" aria-hidden="true"></span>`;
-    }).join('');
 
   board.innerHTML = `
-    <object class="diplomacy-map" id="diplomacy-map" data="data/Diplomacy.svg" type="image/svg+xml" aria-label="Standard Diplomacy board map"></object>
-    <div class="map-overlay">${ownerMarkers}${frontMarkers}${unitMarkers}</div>
+    <object class="diplomacy-map" id="diplomacy-map" data="data/DiplomacyMap.svg" type="image/svg+xml" aria-label="Standard Diplomacy board map"></object>
   `;
 
   const mapObject = document.getElementById('diplomacy-map');
-  mapObject.addEventListener('load', () => applyMapOwnership(mapObject, scOwners, selectedCountry), { once: true });
+  mapObject.addEventListener('load', () => applyMapState(mapObject, scOwners, units, selectedCountry), { once: true });
 }
 
-function applyMapOwnership(mapObject, scOwners, selectedCountry) {
+function getSvgProvincePaths(svgDocument, province) {
+  const normalizedProvince = String(province || '').trim();
+  const baseProvince = normalizedProvince.split('/')[0];
+  const directId = svgProvinceAliases[normalizedProvince] ?? normalizedProvince.toLowerCase();
+  const directPath = svgDocument.getElementById(directId);
+  if (directPath) return [directPath];
+
+  const coastIds = splitCoastProvinces[baseProvince];
+  if (coastIds) {
+    return coastIds
+      .map((coastId) => svgDocument.getElementById(coastId))
+      .filter(Boolean);
+  }
+
+  console.warn(`No SVG province path found for ${normalizedProvince}.`);
+  return [];
+}
+
+function ensureHatchPattern(svgDocument, patternId, baseColor, stripeColor) {
+  if (svgDocument.getElementById(patternId)) return `url(#${patternId})`;
+
+  const namespace = 'http://www.w3.org/2000/svg';
+  const defs = svgDocument.querySelector('defs') || svgDocument.documentElement.insertBefore(
+    svgDocument.createElementNS(namespace, 'defs'),
+    svgDocument.documentElement.firstChild,
+  );
+  const pattern = svgDocument.createElementNS(namespace, 'pattern');
+  pattern.setAttribute('id', patternId);
+  pattern.setAttribute('width', '12');
+  pattern.setAttribute('height', '12');
+  pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+  pattern.setAttribute('patternTransform', 'rotate(45)');
+
+  const background = svgDocument.createElementNS(namespace, 'rect');
+  background.setAttribute('width', '12');
+  background.setAttribute('height', '12');
+  background.setAttribute('fill', baseColor);
+
+  const stripe = svgDocument.createElementNS(namespace, 'path');
+  stripe.setAttribute('d', 'M 0 0 L 0 12');
+  stripe.setAttribute('stroke', stripeColor);
+  stripe.setAttribute('stroke-width', '4');
+
+  pattern.append(background, stripe);
+  defs.append(pattern);
+  return `url(#${patternId})`;
+}
+
+function applyProvinceStyle(paths, fill, stroke, strokeWidth, label) {
+  paths.forEach((path) => {
+    path.style.fill = fill;
+    path.style.fillOpacity = '1';
+    path.style.stroke = stroke;
+    path.style.strokeWidth = strokeWidth;
+    path.style.cursor = 'pointer';
+    path.setAttribute('aria-label', label);
+  });
+}
+
+function applyMapState(mapObject, scOwners, units, selectedCountry) {
   const svgDocument = mapObject.contentDocument;
   if (!svgDocument) return;
 
+  const provinceLayer = svgDocument.getElementById('provinces');
+  if (provinceLayer) {
+    provinceLayer.style.display = 'inline';
+    provinceLayer.querySelectorAll(':scope > path, :scope > polygon').forEach((path) => {
+      path.style.fill = 'transparent';
+      path.style.stroke = 'transparent';
+    });
+  }
+
   Object.entries(scOwners).forEach(([province, owner]) => {
-    const pathId = provinceToSvgPath[province];
-    const path = pathId ? svgDocument.getElementById(pathId) : null;
-    if (!path) return;
     const fill = mapFillColors[owner] ?? mapFillColors.Neutral;
-    path.style.fill = fill;
-    path.style.fillOpacity = owner === selectedCountry ? '0.72' : '0.42';
-    path.style.stroke = owner === selectedCountry ? '#d7b46d' : '#ffffff';
-    path.style.strokeWidth = owner === selectedCountry ? '3.2' : '1.33';
-    path.style.cursor = 'pointer';
-    path.setAttribute('aria-label', `${province}: ${owner || 'Neutral'} supply center`);
+    const selected = owner === selectedCountry;
+    applyProvinceStyle(
+      getSvgProvincePaths(svgDocument, province),
+      fill,
+      selected ? '#d7b46d' : '#ffffff',
+      selected ? '4' : '1.5',
+      `${province}: ${owner || 'Neutral'} supply center`,
+    );
+  });
+
+  units.forEach((unit) => {
+    const owner = scOwners[unit.province];
+    const baseColor = owner === undefined
+      ? '#d6d2bd'
+      : (mapFillColors[owner] ?? mapFillColors.Neutral);
+    const fill = ensureHatchPattern(
+      svgDocument,
+      `unit-hatch-${String(owner || 'neutral').toLowerCase()}-${unit.country.toLowerCase()}`,
+      baseColor,
+      mapFillColors[unit.country] ?? mapFillColors.Neutral,
+    );
+    const selected = unit.country === selectedCountry;
+    const front = !selected && state.payload?.countries?.[unit.country]?.current?.active_fronts > 0;
+    applyProvinceStyle(
+      getSvgProvincePaths(svgDocument, unit.province),
+      fill,
+      selected ? '#d7b46d' : (front ? '#d77b6d' : '#ffffff'),
+      selected ? '4' : (front ? '3' : '1.5'),
+      `${unit.country} ${unit.unit_type} in ${unit.province}`,
+    );
   });
 }
 

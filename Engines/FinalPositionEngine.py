@@ -31,6 +31,7 @@ class FinalPositionEngine:
         # Retreat phase
         for country, orders in retreat_orders.items():
             for o in orders:
+                final_positions.pop(o["from"], None)
                 if o["success"] and o["to"]:
                     final_positions[o["to"]] = country
                 # failed retreat → destroyed

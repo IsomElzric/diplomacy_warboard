@@ -131,8 +131,15 @@ def build_game_timeline(season_data):
 
         # Units: one per occupied province, with order attached
         if season.lower() != "winter":
+            retreat_sources = {
+                order["from"]
+                for country_orders in retreat_orders.values()
+                for order in country_orders
+            }
             for country, orders in movement_orders.items():
                 for o in orders:
+                    if o["from"] in retreat_sources:
+                        continue
                     prov = o["to"] if o.get("success") and o.get("to") else o["from"]
                     if prov and final_positions.get(prov) == country:
                         board.add_unit(UnitState(
@@ -140,6 +147,15 @@ def build_game_timeline(season_data):
                             unit_type=o["unit"],
                             province=prov,
                             order=o
+                        ))
+            for country, orders in retreat_orders.items():
+                for o in orders:
+                    if o.get("success") and o.get("to") and final_positions.get(o["to"]) == country:
+                        board.add_unit(UnitState(
+                            country=country,
+                            unit_type=o["unit"],
+                            province=o["to"],
+                            order=o,
                         ))
         else:
             for country, orders in movement_orders.items():

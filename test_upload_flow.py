@@ -157,6 +157,36 @@ A Mos Build  SUCCEEDS
         self.assertEqual(movement["France"][1]["action"], "BUILD")
         self.assertEqual(movement["Russia"][0]["action"], "BUILD")
 
+    def test_inline_retreat_removes_displaced_unit_and_places_retreating_unit(self):
+        from main import build_game_timeline
+
+        timeline = build_game_timeline([
+            (1901, "Fall", """
+Russia
+F Rum H  FAILS (Insufficient hold strength)
+F Rum Retreat to Sev  SUCCEEDS
+"""),
+        ])
+
+        russia = timeline.get_season_summary(1901, "Fall")["Russia"]
+        self.assertEqual(russia.units, 1)
+
+    def test_bare_retreat_and_disband_follow_the_preceding_unit_order(self):
+        from main import build_game_timeline
+
+        timeline = build_game_timeline([
+            (1902, "Fall", """
+Russia
+A Arm - Sev  FAILS (Attack strength is not greater than the defend strength)
+Retreat to Syr  SUCCEEDS
+F Swe H  FAILS (Insufficient hold strength)
+Disband  SUCCEEDS
+"""),
+        ])
+
+        russia = timeline.get_season_summary(1902, "Fall")["Russia"]
+        self.assertEqual(russia.units, 1)
+
     def test_full_game_keeps_country_unit_totals_across_winter_builds(self):
         from main import build_game_timeline
 

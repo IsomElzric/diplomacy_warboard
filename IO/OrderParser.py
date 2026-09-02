@@ -28,6 +28,29 @@ class OrderParser:
         r"$"
     )
 
+    INLINE_RETREAT_LINE = re.compile(
+        r"^(?P<unit>[AF])\s+"
+        r"(?P<from>[A-Za-z/]+)\s+Retreat\s+to\s+"
+        r"(?P<to>[A-Za-z/]+)\s+"
+        r"(?P<result>SUCCEEDS|FAILS)"
+        r"(?:\s*\((?P<reason>.+)\))?"
+        r"$",
+        re.IGNORECASE,
+    )
+
+    BARE_RETREAT_LINE = re.compile(
+        r"^Retreat\s+to\s+(?P<to>[A-Za-z/]+)\s+"
+        r"(?P<result>SUCCEEDS|FAILS)"
+        r"(?:\s*\((?P<reason>.+)\))?$",
+        re.IGNORECASE,
+    )
+
+    BARE_DISBAND_LINE = re.compile(
+        r"^Disband\s+(?P<result>SUCCEEDS|FAILS)"
+        r"(?:\s*\((?P<reason>.+)\))?$",
+        re.IGNORECASE,
+    )
+
     DISLODGED_PATTERN = re.compile(
         r"DISLODGED(?:\s+by\s+(?P<attacker>.+))?",
         re.IGNORECASE
@@ -41,6 +64,7 @@ class OrderParser:
 
         current_country = None
         retreat_mode = False
+        previous_order = None
 
         for line in lines:
 
@@ -48,6 +72,7 @@ class OrderParser:
             if self.RETREAT_HEADER.match(line):
                 retreat_mode = True
                 current_country = None
+                previous_order = None
                 continue
 
             # Country Retreat header
@@ -55,6 +80,7 @@ class OrderParser:
                 retreat_mode = True
                 current_country = line.split()[0]
                 retreats[current_country] = []
+                previous_order = None
                 continue
 
             # Country header
@@ -66,6 +92,7 @@ class OrderParser:
                     retreats.setdefault(current_country, [])
                 else:
                     movement.setdefault(current_country, [])
+                previous_order = None
                 continue
 
             winter = self.WINTER_ORDER_LINE.match(line)
@@ -81,6 +108,41 @@ class OrderParser:
                     retreats[current_country].append(entry)
                 else:
                     movement[current_country].append(entry)
+                continue
+
+            inline_retreat = self.INLINE_RETREAT_LINE.match(line)
+            if inline_retreat and current_country:
+                entry = inline_retreat.groupdict()
+                entry["action"] = "RETREAT"
+                entry["success"] = entry["result"] == "SUCCEEDS"
+                entry["dislodged"] = True
+                entry["dislodged_by"] = None
+                retreats.setdefault(current_country, []).append(entry)
+                continue
+
+            bare_retreat = self.BARE_RETREAT_LINE.match(line)
+            if bare_retreat and current_country and previous_order:
+                entry = bare_retreat.groupdict()
+                entry["unit"] = previous_order["unit"]
+                entry["from"] = previous_order["from"]
+                entry["action"] = "RETREAT"
+                entry["success"] = entry["result"] == "SUCCEEDS"
+                entry["dislodged"] = True
+                entry["dislodged_by"] = None
+                retreats.setdefault(current_country, []).append(entry)
+                continue
+
+            bare_disband = self.BARE_DISBAND_LINE.match(line)
+            if bare_disband and current_country and previous_order:
+                entry = bare_disband.groupdict()
+                entry["unit"] = previous_order["unit"]
+                entry["from"] = previous_order["from"]
+                entry["to"] = None
+                entry["action"] = "DISBAND"
+                entry["success"] = entry["result"] == "SUCCEEDS"
+                entry["dislodged"] = True
+                entry["dislodged_by"] = None
+                retreats.setdefault(current_country, []).append(entry)
                 continue
 
             # Order line
@@ -123,6 +185,7 @@ class OrderParser:
                     retreats[current_country].append(entry)
                 else:
                     movement[current_country].append(entry)
+                    previous_order = entry
                 continue
 
         return movement, retreats
