@@ -296,6 +296,58 @@ input[type="number"] {
   border-top: 1px solid rgba(255,255,255,0.06);
 }
 
+.operational-readout {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 1rem;
+  padding: 0.8rem 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.operational-readout div {
+  min-width: 0;
+}
+
+.operational-readout span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.62rem;
+  letter-spacing: 0.08rem;
+  text-transform: uppercase;
+}
+
+.operational-readout strong {
+  display: block;
+  margin-top: 0.28rem;
+  color: var(--text);
+  font-size: 0.88rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.operational-ledger-panel {
+  margin-top: 1rem;
+  min-width: 0;
+}
+
+.operational-ledger-table {
+  min-width: 760px;
+}
+
+.operational-ledger-table td {
+  white-space: nowrap;
+}
+
+.ledger-risk {
+  color: var(--red);
+}
+
+.ledger-secure {
+  color: var(--green);
+}
+
 .model-row {
   display: flex;
   justify-content: space-between;
@@ -875,6 +927,10 @@ tbody tr:hover {
 @media (max-width: 980px) {
   .app-shell {
     grid-template-columns: 1fr;
+  }
+
+  .main-panel {
+    min-width: 0;
   }
 
   .left-panel {

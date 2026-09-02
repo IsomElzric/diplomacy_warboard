@@ -1,4 +1,4 @@
-from Data.location_data import compute_country_geography_metrics
+from Data.location_data import compute_board_tactical_metrics
 
 
 class FrontMetricsEngine:
@@ -6,5 +6,5 @@ class FrontMetricsEngine:
     Derive geography-aware country metrics from current province and unit state.
     """
 
-    def compute(self, country, owned_provinces, hostile_countries=None):
-        return compute_country_geography_metrics(country, owned_provinces, hostile_countries or [])
+    def compute(self, country, units_by_province, sc_owners):
+        return compute_board_tactical_metrics(country, units_by_province, sc_owners)

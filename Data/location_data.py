@@ -65,6 +65,52 @@ PROVINCE_DATA = {
     "Spa/SC": {"front_id": "WesternFront", "neighbors": ["Spa/NC", "Mar", "Por", "Mid"], "coastal": True},
 }
 
+STANDARD_ADJACENCY = {
+    "Cly": ["Edi", "Lvp", "NWG"], "Edi": ["Cly", "Yor", "NTH", "NWG"],
+    "Lvp": ["Cly", "Yor", "Wal", "IRI"], "Yor": ["Lvp", "Wal", "Lon", "NTH"],
+    "Wal": ["Lvp", "Yor", "Lon", "IRI", "ENG"], "Lon": ["Wal", "Yor", "ENG", "NTH"],
+    "Nwy": ["NTH", "NWG", "BAR", "SKA", "Swe", "Fin", "Stp"],
+    "Swe": ["Nwy", "SKA", "Den", "BAL", "BOT", "Fin"],
+    "Fin": ["Nwy", "Swe", "Stp", "BOT"], "Stp": ["Fin", "Nwy", "BAR", "BOT", "Mos", "Lvn"],
+    "Lvn": ["Stp", "Mos", "War", "Pru", "BAL", "BOT"], "Den": ["NTH", "SKA", "Swe", "HEL", "Kie", "BAL"],
+    "Hol": ["NTH", "HEL", "Kie", "Ruh", "Bel"], "Bel": ["NTH", "ENG", "Pic", "Bur", "Ruh", "Hol"],
+    "Kie": ["Den", "HEL", "BAL", "Ber", "Mun", "Ruh", "Hol"], "Ruh": ["Hol", "Kie", "Mun", "Bur", "Bel"],
+    "Ber": ["Kie", "Pru", "Sil", "Mun"], "Pru": ["Ber", "Sil", "War", "BAL", "Lvn"],
+    "Sil": ["Ber", "Pru", "War", "Gal", "Boh", "Mun"], "Mun": ["Ruh", "Kie", "Ber", "Sil", "Boh", "Tyr", "Vie", "Bur"],
+    "Pic": ["Bel", "ENG", "Bre", "Par", "Bur"], "Bre": ["ENG", "MAO", "Pic", "Par", "Gas"],
+    "Par": ["Pic", "Bre", "Gas", "Bur"], "Bur": ["Pic", "Par", "Gas", "Mar", "Mun", "Ruh", "Bel"],
+    "Gas": ["Bre", "Par", "Bur", "Mar", "Spa", "MAO"], "Mar": ["Gas", "Bur", "Pie", "Spa", "LYO"],
+    "Spa": ["Gas", "Mar", "Por", "MAO", "WES", "LYO"], "Por": ["Spa", "MAO"],
+    "NAf": ["MAO", "WES", "Tun"], "Tun": ["WES", "TYS", "ION", "NAf"],
+    "Pie": ["Mar", "LYO", "Tus", "Ven", "Tyr"], "Ven": ["Pie", "Tyr", "Tri", "Apu", "Rom"],
+    "Tus": ["Pie", "LYO", "TYS", "Rom"], "Rom": ["Tus", "Ven", "Apu", "Nap", "TYS"],
+    "Nap": ["Rom", "Apu", "ION", "TYS"], "Apu": ["Ven", "Rom", "Nap", "ION", "ADR"],
+    "Boh": ["Mun", "Sil", "Gal", "Vie", "Tyr"], "Tyr": ["Mun", "Boh", "Vie", "Tri", "Ven", "Pie"],
+    "Vie": ["Mun", "Boh", "Tyr", "Tri", "Bud", "Gal"], "Tri": ["Vie", "Tyr", "Ven", "Apu", "ADR", "Alb", "Ser", "Bud"],
+    "Bud": ["Vie", "Tri", "Gal", "Rum", "Ser"], "Gal": ["Vie", "Bud", "Rum", "Ukr", "War", "Sil", "Boh"],
+    "Ser": ["Tri", "Bud", "Rum", "Bul", "Gre", "Alb"], "Alb": ["Tri", "Ser", "Gre", "ION", "ADR"],
+    "Gre": ["Alb", "Ser", "Bul", "AEG", "ION"], "Bul": ["Ser", "Rum", "Gre", "Con", "AEG", "BLA"],
+    "Rum": ["Bud", "Gal", "Ukr", "Sev", "BLA", "Bul", "Ser"], "Con": ["Bul", "BLA", "Ank", "Smy", "AEG"],
+    "Smy": ["Con", "Ank", "Arm", "EAS", "AEG"], "Ank": ["Con", "Smy", "Arm", "BLA"],
+    "Arm": ["Ank", "Smy", "Sev", "Syr", "BLA"], "Syr": ["Arm", "Smy", "EAS"],
+    "Sev": ["Arm", "Ukr", "Rum", "BLA", "Mos"], "Ukr": ["Gal", "War", "Mos", "Sev", "Rum"],
+    "Mos": ["Stp", "Lvn", "War", "Ukr", "Sev"], "War": ["Lvn", "Pru", "Sil", "Gal", "Ukr", "Mos"],
+    "NAO": ["NWG", "Cly", "IRI", "MAO"], "NWG": ["NAO", "BAR", "Nwy", "NTH", "Edi", "Cly"],
+    "BAR": ["NWG", "Nwy", "Stp"], "NTH": ["NWG", "Nwy", "SKA", "Den", "HEL", "Hol", "Bel", "ENG", "Lon", "Yor", "Edi"],
+    "SKA": ["NTH", "Nwy", "Swe", "Den"], "HEL": ["NTH", "Den", "Kie", "Hol"],
+    "BAL": ["Den", "Swe", "BOT", "Lvn", "Pru", "Ber", "Kie"], "BOT": ["Swe", "Fin", "Stp", "Lvn", "BAL"],
+    "ENG": ["NTH", "Bel", "Pic", "Bre", "MAO", "IRI", "Wal", "Lon"], "IRI": ["NAO", "MAO", "ENG", "Wal", "Lvp"],
+    "MAO": ["NAO", "IRI", "ENG", "Bre", "Gas", "Spa", "Por", "WES", "NAf"],
+    "WES": ["MAO", "Spa", "LYO", "TYS", "Tun", "NAf"], "LYO": ["WES", "TYS", "Pie", "Tus", "Rom", "Mar", "Spa"],
+    "TYS": ["WES", "LYO", "ION", "Tun", "Nap", "Rom", "Tus"], "ION": ["TYS", "Tun", "Alb", "Gre", "AEG", "EAS", "Nap", "Apu", "ADR"],
+    "ADR": ["ION", "Alb", "Tri", "Ven", "Apu"], "AEG": ["ION", "Gre", "Bul", "Con", "Smy", "EAS"],
+    "EAS": ["ION", "AEG", "Smy", "Syr"], "BLA": ["Rum", "Bul", "Con", "Ank", "Arm", "Sev"],
+}
+
+for province, neighbors in STANDARD_ADJACENCY.items():
+    PROVINCE_DATA.setdefault(province, {"front_id": "", "coastal": False})["neighbors"] = neighbors
+
+
 PROVINCE_GRAPH = {
     province: set(metadata.get("neighbors", []))
     for province, metadata in PROVINCE_DATA.items()
@@ -90,6 +136,62 @@ def get_fronts_for_country(country, owned_provinces):
 
 def get_neighbors_for_province(province):
     return list(PROVINCE_GRAPH.get(province, set()))
+
+
+def compute_board_tactical_metrics(country, units_by_province, sc_owners):
+    """Return tactical exposure metrics from the current occupied board."""
+    occupants = {
+        province: unit.country
+        for province, unit in (units_by_province or {}).items()
+    }
+    own_units = {province for province, owner in occupants.items() if owner == country}
+    owned_centers = {province for province, owner in (sc_owners or {}).items() if owner == country}
+
+    frontline_units = set()
+    hostile_adjacencies = 0
+    for province in own_units:
+        hostile_neighbors = [
+            neighbor for neighbor in PROVINCE_GRAPH.get(province, set())
+            if occupants.get(neighbor) not in (None, country)
+        ]
+        if hostile_neighbors:
+            frontline_units.add(province)
+            hostile_adjacencies += len(hostile_neighbors)
+
+    threatened_centers = set()
+    defended_centers = set()
+    for center in owned_centers:
+        neighbors = PROVINCE_GRAPH.get(center, set())
+        if any(occupants.get(neighbor) not in (None, country) for neighbor in neighbors):
+            threatened_centers.add(center)
+            if center in own_units or any(occupants.get(neighbor) == country for neighbor in neighbors):
+                defended_centers.add(center)
+
+    unvisited = set(frontline_units)
+    active_fronts = 0
+    while unvisited:
+        active_fronts += 1
+        pending = [unvisited.pop()]
+        while pending:
+            province = pending.pop()
+            connected = PROVINCE_GRAPH.get(province, set()) & unvisited
+            unvisited -= connected
+            pending.extend(connected)
+
+    return {
+        "active_fronts": active_fronts,
+        "frontline_units": len(frontline_units),
+        "hostile_adjacencies": hostile_adjacencies,
+        "threatened_centers": len(threatened_centers),
+        "defended_threatened_centers": len(defended_centers),
+        "exposed_centers": len(threatened_centers - defended_centers),
+        "center_defense_rate": (
+            len(defended_centers) / len(threatened_centers)
+            if threatened_centers else 1.0
+        ),
+        "isolation": max(0.0, 1.0 - (len(frontline_units) / max(1, len(own_units)))),
+        "encirclement": min(1.0, hostile_adjacencies / max(1, len(own_units) * 2)),
+    }
 
 
 def get_country_front_pressure(owned_provinces, hostile_countries):

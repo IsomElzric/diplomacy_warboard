@@ -1070,6 +1070,12 @@ function renderGlobalOverview(payload) {
   const mostPressed = countries
     .map(([country, data]) => ({ country, value: Number(data.current?.active_fronts ?? 0) }))
     .sort((a, b) => b.value - a.value)[0];
+  const mostExposed = countries
+    .map(([country, data]) => ({ country, value: Number(data.current?.exposed_centers ?? 0) }))
+    .sort((a, b) => b.value - a.value)[0];
+  const closestToSolo = countries
+    .map(([country, data]) => ({ country, value: Number(data.current?.solo_distance ?? 18) }))
+    .sort((a, b) => a.value - b.value)[0];
   const postureGroups = countries.reduce((groups, [country, data]) => {
     const posture = data.current?.posture || 'Inactive';
     groups[posture] = groups[posture] || [];
@@ -1103,24 +1109,59 @@ function renderGlobalOverview(payload) {
       ${mostPressed ? `${mostPressed.country} is fighting on ${mostPressed.value} fronts, driving the broadest operational footprint.` : 'No active fronts recorded.'}
     </div>
     <div class="overview-factor">
-      <strong>Exposure</strong>
-      ${mostIsolated ? `${mostIsolated.country} carries the highest isolation index at ${round(mostIsolated.value, 2)}, which raises strategic vulnerability.` : 'No isolation data available.'}
+      <strong>Center security</strong>
+      ${mostExposed?.value ? `${mostExposed.country} has ${mostExposed.value} exposed supply ${mostExposed.value === 1 ? 'center' : 'centers'} without adjacent unit cover.` : 'Every threatened supply center currently has adjacent friendly coverage.'}
     </div>
     <div class="overview-factor">
       <strong>Leader</strong>
       ${leader ? `${leader.country} remains the model favorite with ${round(getProjectedWinChance(leader.country, payload), 0)}% confidence and ${leader.sc} centers.` : 'No leader available.'}
     </div>
     <div class="overview-factor">
-      <strong>Operational tempo</strong>
-      ${leader ? `${leader.country} is sustaining ${round(leader.ema, 2)} EMA momentum alongside ${leader.holds} holds and ${leader.supports} supports.` : 'No operational tempo available.'}
+      <strong>Solo race</strong>
+      ${closestToSolo ? `${closestToSolo.country} is ${closestToSolo.value} supply ${closestToSolo.value === 1 ? 'center' : 'centers'} from the 18-center solo threshold.` : 'No solo-race data available.'}
     </div>
   `;
 
   stageReport.innerHTML = `
     <p>${leader.country} holds the present material lead with ${leader.sc} supply centers and ${leader.units} units. ${strongestTrajectory.country} has accumulated ${formatNumber(strongestTrajectory.value)} momentum through ${selectedLabel}, making ${strongestTrajectory.country === leader.country ? 'that lead' : 'its long-term trajectory'} the clearest strategic signal.</p>
-    <p>${postures.length ? `${postures.join('; ')}. ` : ''}${mostPressed.country} carries the broadest operational burden across ${mostPressed.value} active fronts. ${mostIsolated.country} is the most exposed position, with isolation at ${formatNumber(mostIsolated.value)}.</p>
-    <p>${fragileCountries.map((entry) => `${entry.country} (${formatNumber(entry.risk)})`).join(' and ')} currently carry the highest combined isolation and encirclement risk. The next decisive shift is most likely to come from conversion: successful attacks on supply centers, reinforced threatened-center defense, and whether the leading powers can sustain their current posture without overextending.</p>
+    <p>${postures.length ? `${postures.join('; ')}. ` : ''}${mostPressed.country} has the broadest active perimeter across ${mostPressed.value} fronts. ${mostExposed?.value ? `${mostExposed.country} has ${mostExposed.value} supply ${mostExposed.value === 1 ? 'center' : 'centers'} under direct pressure without adjacent cover.` : 'No supply center is currently under direct pressure without friendly cover.'}</p>
+    <p>${fragileCountries.map((entry) => `${entry.country} (${formatNumber(entry.risk)})`).join(' and ')} carry the highest combined positional risk. The next decisive shift is most likely to come from center conversion, Winter material adjustments, and whether threatened centers retain coverage.</p>
   `;
+}
+
+function renderOperationalLedger(payload) {
+  const ledgerBody = document.getElementById('operational-ledger-body');
+  const countries = getCountryEntries(payload)
+    .sort(([, left], [, right]) => Number(right.current?.sc ?? 0) - Number(left.current?.sc ?? 0));
+
+  ledgerBody.innerHTML = countries.map(([country, data]) => {
+    const current = data.current ?? {};
+    const winterAdjustment = Number(current.winter_adjustment ?? 0);
+    const winter = winterAdjustment > 0
+      ? `+${winterAdjustment} build${winterAdjustment === 1 ? '' : 's'}`
+      : winterAdjustment < 0
+        ? `${Math.abs(winterAdjustment)} remove${winterAdjustment === -1 ? '' : 's'}`
+        : 'Even';
+    const orderRate = `${round(Number(current.order_success_rate ?? 0) * 100, 0)}%`;
+    const failedMoves = Number(current.failed_moves ?? 0);
+    const exposedCenters = Number(current.exposed_centers ?? 0);
+    const homeLost = Number(current.home_centers_lost ?? 0);
+    const homeCenters = Number(current.home_centers ?? 0);
+    const riskClass = exposedCenters || homeLost ? 'ledger-risk' : 'ledger-secure';
+
+    return `
+      <tr>
+        <td><strong>${country}</strong></td>
+        <td>${current.sc ?? 0} / ${current.units ?? 0}</td>
+        <td>${current.solo_distance ?? 18} to 18</td>
+        <td>${winter}</td>
+        <td>${orderRate}${failedMoves ? `, ${failedMoves} failed move${failedMoves === 1 ? '' : 's'}` : ''}</td>
+        <td>${current.frontline_units ?? 0} units / ${current.active_fronts ?? 0} fronts</td>
+        <td class="${riskClass}">${exposedCenters} exposed / ${current.threatened_centers ?? 0} threatened</td>
+        <td class="${homeLost ? 'ledger-risk' : 'ledger-secure'}">${homeCenters - homeLost}/${homeCenters} secure</td>
+      </tr>
+    `;
+  }).join('');
 }
 
 function renderIntelPanel(payload) {
@@ -1172,6 +1213,7 @@ function renderIntelPanel(payload) {
   const selectedEncirclement = Number(selectedState.encirclement ?? 0);
   const selectedHolds = Number(selectedState.holds ?? 0);
   const selectedSupports = Number(selectedState.supports ?? 0);
+  const selectedExposure = Number(selectedState.exposed_centers ?? 0);
 
   if (selectedName === leader.country) {
     intelAdvice.textContent = `${selectedName} is in the strongest position. To stay ahead, keep converting center gains into sustained pressure, preserve high support rates, and avoid letting isolation or encirclement drift upward enough to compromise the position.`;
@@ -1179,7 +1221,7 @@ function renderIntelPanel(payload) {
   }
 
   const gapText = selectedSc >= leader.sc ? 'close the center-count gap' : 'keep the center-count gap from widening';
-  intelAdvice.textContent = `${selectedName} needs to ${gapText}, reduce isolation from ${formatNumber(selectedIsolation)} and encirclement from ${formatNumber(selectedEncirclement)}, and improve its operational support profile from ${selectedHolds} holds and ${selectedSupports} supports so it can recover momentum and challenge ${leader.country} before the lead hardens.`;
+  intelAdvice.textContent = `${selectedName} needs to ${gapText}, reduce isolation from ${formatNumber(selectedIsolation)} and encirclement from ${formatNumber(selectedEncirclement)}, and improve its operational profile from ${selectedHolds} holds and ${selectedSupports} supports.${selectedExposure ? ` It also has ${selectedExposure} exposed supply ${selectedExposure === 1 ? 'center' : 'centers'} requiring attention.` : ''}`;
 }
 
 function renderCountryFocus(country, payload) {
@@ -1197,9 +1239,26 @@ function renderCountryFocus(country, payload) {
   document.getElementById('focus-confidence').textContent = `${round(confidence, 0)}%`;
   document.getElementById('confidence-bar').style.width = `${Math.min(100, confidence)}%`;
 
+  const winterAdjustment = Number(current.winter_adjustment ?? 0);
+  const winterText = winterAdjustment > 0
+    ? `+${winterAdjustment} build${winterAdjustment === 1 ? '' : 's'}`
+    : winterAdjustment < 0
+      ? `${Math.abs(winterAdjustment)} remove${winterAdjustment === -1 ? '' : 's'}`
+      : 'Even';
+  document.getElementById('focus-solo-distance').textContent = `${current.solo_distance ?? 18} to 18`;
+  document.getElementById('focus-winter-adjustment').textContent = winterText;
+  document.getElementById('focus-order-success').textContent = `${round(Number(current.order_success_rate ?? 0) * 100, 0)}%`;
+  document.getElementById('focus-center-defense').textContent = `${round(Number(current.center_defense_rate ?? 1) * 100, 0)}%`;
+  document.getElementById('focus-frontline-units').textContent = current.frontline_units ?? 0;
+  document.getElementById('focus-exposed-centers').textContent = current.exposed_centers ?? 0;
+
   const momentumText = Number(current.momentum ?? 0) >= 1 ? 'is sustaining constructive momentum' : 'is struggling to convert pressure into gains';
   const summary = current.sc >= 9 ? 'is shaping a dominant center presence' : current.sc >= 5 ? 'is building a credible foothold' : 'is still contesting space and tempo';
-  const brief = `${country} ${summary} and ${momentumText}. Its EMA momentum is ${formatNumber(current.ema_momentum ?? 0)}, CGI is ${formatNumber(current.cgi ?? 0)}, and the model gives it a ${winChance}% win outlook this cycle. With ${current.active_fronts ?? 0} active fronts and ${current.isolation ?? 0} isolation exposure, the strategic picture remains ${Number(current.momentum ?? 0) >= 1 ? 'promising but volatile' : 'fragile and contested'}.`;
+  const exposedCenters = Number(current.exposed_centers ?? 0);
+  const centerRisk = exposedCenters
+    ? `${exposedCenters} supply ${exposedCenters === 1 ? 'center is' : 'centers are'} under direct pressure without adjacent cover`
+    : 'every directly threatened supply center has adjacent friendly cover';
+  const brief = `${country} ${summary}, ${current.solo_distance ?? 18} centers from a solo, and ${momentumText}. Orders converted at ${round(Number(current.order_success_rate ?? 0) * 100, 0)}%; ${centerRisk}. ${winterText === 'Even' ? 'Its current force matches its center count for Winter.' : `The current material balance allows ${winterText} in Winter.`}`;
   document.getElementById('country-brief').textContent = brief;
 
   const historyList = document.getElementById('history-list');
@@ -1259,6 +1318,7 @@ function renderDashboard(payload) {
     document.getElementById('sc-control-chart').innerHTML = '<div class="empty-state">No supply-center data loaded.</div>';
     document.getElementById('position-scatter-chart').innerHTML = '<div class="empty-state">No positional data loaded.</div>';
     document.getElementById('posture-matrix').innerHTML = '<div class="empty-state">No posture history loaded.</div>';
+    document.getElementById('operational-ledger-body').innerHTML = '<tr><td colspan="8" class="empty-table">No operational data loaded.</td></tr>';
     renderWarboard(null);
     return;
   }
@@ -1277,6 +1337,7 @@ function renderDashboard(payload) {
   renderCountryFocus(activeCountry, normalizedPayload);
   renderCountryTrendChart(activeCountry, normalizedPayload);
   renderGlobalOverview(normalizedPayload);
+  renderOperationalLedger(normalizedPayload);
   renderIntelPanel(normalizedPayload);
   document.getElementById('season-header').textContent = season ? formatSeason(season.year, season.season) : 'No Season Loaded';
 }

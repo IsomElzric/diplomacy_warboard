@@ -40,6 +40,20 @@ class CountryState:
         self.allied_support_rate = 0.0
         self.unit_sc_ratio = 0.0
         self.board_control = 0.0
+        self.solo_distance = 18
+        self.winter_adjustment = 0
+        self.home_centers = 0
+        self.home_centers_lost = 0
+        self.home_centers_enemy_occupied = 0
+        self.frontline_units = 0
+        self.hostile_adjacencies = 0
+        self.exposed_centers = 0
+        self.center_defense_rate = 1.0
+        self.successful_moves = 0
+        self.failed_moves = 0
+        self.failed_orders = 0
+        self.retreats = 0
+        self.disbands = 0
 
         # Derived Metrics
         self.sc_gains = 0

@@ -221,6 +221,24 @@ def build_game_timeline(season_data):
             cs.holds = sum(1 for o in orders if o.get("action") == "HOLD")
             cs.supports = sum(1 for o in orders if o.get("action") == "SUPPORT")
             cs.moves = sum(1 for o in orders if o.get("action") == "MOVE")
+            cs.successful_moves = sum(
+                1 for o in orders
+                if o.get("action") == "MOVE" and o.get("success")
+            )
+            cs.failed_moves = sum(
+                1 for o in orders
+                if o.get("action") == "MOVE" and not o.get("success")
+            )
+            cs.failed_orders = sum(1 for o in orders if not o.get("success"))
+            retreat_actions = retreat_orders.get(country, [])
+            cs.retreats = sum(
+                1 for o in retreat_actions
+                if o.get("action") == "RETREAT" and o.get("success")
+            )
+            cs.disbands = sum(
+                1 for o in retreat_actions
+                if o.get("action") == "DISBAND" and o.get("success")
+            )
             cs.support_holds = sum(
                 1 for o in orders
                 if o.get("action") == "SUPPORT" and " - " not in (o.get("to") or "")
@@ -257,7 +275,7 @@ def build_game_timeline(season_data):
                 if order.get("action") == "SUPPORT"
                 and unit_country_by_source.get((order.get("to") or "").split()[0]) not in (None, country)
             )
-            threatened_centers = {
+            order_threatened_centers = {
                 order.get("to")
                 for enemy_country, enemy_orders in movement_orders.items()
                 if enemy_country != country
@@ -265,17 +283,16 @@ def build_game_timeline(season_data):
                 if order.get("action") == "MOVE"
                 and order.get("to") in owned_scs
             }
-            cs.threatened_centers = len(threatened_centers)
             defended_centers = {
                 order.get("from") for order in orders
-                if order.get("action") == "HOLD" and order.get("from") in threatened_centers
+                if order.get("action") == "HOLD" and order.get("from") in order_threatened_centers
             }
             defended_centers.update(
                 (order.get("to") or "").split()[0]
                 for order in orders
                 if order.get("action") == "SUPPORT"
                 and " - " not in (order.get("to") or "")
-                and (order.get("to") or "").split()[0] in threatened_centers
+                and (order.get("to") or "").split()[0] in order_threatened_centers
             )
             cs.defended_threatened_centers = len(defended_centers)
             front_unit_counts = {}
@@ -288,12 +305,33 @@ def build_game_timeline(season_data):
                 if front_unit_counts and units else 0.0
             )
 
-            # Geography metrics
-            hostile = [c for c in sc_owners.values() if c not in ("", "Neutral", country)]
-            geo = front_engine.compute(country, owned_scs, hostile)
+            # Board-aware tactical metrics
+            geo = front_engine.compute(country, board.units_by_province, board.sc_owners)
             cs.active_fronts = geo["active_fronts"]
             cs.isolation = geo["isolation"]
             cs.encirclement = geo["encirclement"]
+            cs.frontline_units = geo["frontline_units"]
+            cs.hostile_adjacencies = geo["hostile_adjacencies"]
+            cs.threatened_centers = geo["threatened_centers"]
+            cs.defended_threatened_centers = geo["defended_threatened_centers"]
+            cs.exposed_centers = geo["exposed_centers"]
+            cs.center_defense_rate = geo["center_defense_rate"]
+            cs.solo_distance = max(0, 18 - cs.sc)
+            cs.winter_adjustment = cs.sc - cs.units
+            home_centers = [
+                province for province, owner in STARTING_SUPPLY_CENTERS.items()
+                if owner == country
+            ]
+            cs.home_centers = len(home_centers)
+            cs.home_centers_lost = sum(
+                1 for province in home_centers
+                if board.sc_owners.get(province) != country
+            )
+            cs.home_centers_enemy_occupied = sum(
+                1 for province in home_centers
+                if province in board.units_by_province
+                and board.units_by_province[province].country != country
+            )
 
             country_states.append(cs)
 

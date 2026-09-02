@@ -1,7 +1,9 @@
 import unittest
 
 from Engines.MetricsEngine import MetricsEngine
+from Data.location_data import compute_board_tactical_metrics
 from IO.OrderParser import OrderParser
+from States.UnitState import UnitState
 from States.CountryState import CountryState
 
 
@@ -115,6 +117,24 @@ A Par - Bur  SUCCEEDS
         self.assertEqual(state.threat_coverage_rate, 0.5)
         self.assertEqual(state.allied_support_rate, 0.5)
         self.assertEqual(state.front_concentration, 0.75)
+
+    def test_board_metrics_detect_enemy_pressure_on_supply_centers(self):
+        units = {
+            "Lon": UnitState("England", "A", "Lon"),
+            "ENG": UnitState("France", "F", "ENG"),
+        }
+        metrics = compute_board_tactical_metrics(
+            "England",
+            units,
+            {"Lon": "England", "Edi": "England", "Lvp": "England"},
+        )
+
+        self.assertEqual(metrics["frontline_units"], 1)
+        self.assertEqual(metrics["hostile_adjacencies"], 1)
+        self.assertEqual(metrics["threatened_centers"], 1)
+        self.assertEqual(metrics["defended_threatened_centers"], 1)
+        self.assertEqual(metrics["exposed_centers"], 0)
+        self.assertGreater(metrics["encirclement"], 0)
 
 
 if __name__ == "__main__":
