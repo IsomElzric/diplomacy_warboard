@@ -549,15 +549,22 @@ input[type="number"] {
 
 .theater-card > div {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
 }
 
+.theater-card > div span {
+  min-width: 0;
+}
+
 .theater-card strong {
+  flex: 0 1 52%;
+  min-width: 0;
   color: var(--gold);
   font-size: 0.8rem;
   text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .theater-card small {
@@ -967,6 +974,11 @@ tbody tr:hover {
 
   .card-grid {
     grid-template-columns: 1fr;
+    min-width: 0;
+  }
+
+  .wide-panel {
+    min-width: 0;
   }
 
   .war-situation {

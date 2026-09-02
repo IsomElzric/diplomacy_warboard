@@ -1393,6 +1393,22 @@ async function loadDashboardDataForSeason(year, season) {
   }
 }
 
+async function readJsonResponse(response, fallbackMessage) {
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const body = await response.text();
+    const message = body.includes('<!DOCTYPE')
+      ? 'The dashboard server returned a web page instead of API data. Restart the dashboard server and try again.'
+      : fallbackMessage;
+    throw new Error(message);
+  }
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload?.error || fallbackMessage);
+  }
+  return payload;
+}
+
 async function submitUploadedOrders() {
   const mode = document.getElementById('upload-mode').value;
   const text = document.getElementById('upload-text').value.trim();
@@ -1418,20 +1434,7 @@ async function submitUploadedOrders() {
       body: JSON.stringify({ text, year, season, mode, existing_text: existingText })
     });
 
-    const contentType = response.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) {
-      const htmlText = await response.text();
-      throw new Error(
-        htmlText.includes('<!DOCTYPE')
-          ? 'The dashboard server is serving the HTML page instead of the API. Refresh the page or restart the backend server and try again.'
-          : `Upload failed with status ${response.status}.`
-      );
-    }
-
-    const payload = await response.json();
-    if (!response.ok) {
-      throw new Error(payload?.error || 'Upload failed');
-    }
+    const payload = await readJsonResponse(response, 'Upload failed.');
     if (gameSession !== state.gameSession) return;
 
     state.gameText = payload?.savedGameText || existingText || text;
@@ -1465,12 +1468,8 @@ async function restoreSavedGameState() {
       body: JSON.stringify({ text: savedText, mode: 'full' }),
     });
 
-    if (!response.ok) {
-      return;
-    }
-
+    const payload = await readJsonResponse(response, 'Saved game data could not be restored.');
     if (gameSession !== state.gameSession) return;
-    const payload = await response.json();
     state.gameText = payload?.savedGameText || savedText;
     renderDashboard(payload);
   } catch (error) {
@@ -1538,8 +1537,7 @@ async function loadSavedWarboard(event) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, mode: 'full' }),
     });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload?.error || 'Saved Warboard could not be loaded.');
+    const payload = await readJsonResponse(response, 'Saved Warboard could not be loaded.');
     state.gameText = payload.savedGameText || text;
     localStorage.setItem('warboard-saved-game-text', state.gameText);
     document.getElementById('upload-text').value = '';
