@@ -1,0 +1,1192 @@
+Spring 1901
+Austria
+A Bud - Ser  SUCCEEDS
+
+F Tri - Alb  SUCCEEDS
+
+A Vie - Gal  SUCCEEDS
+
+England
+F Edi - NWG  SUCCEEDS
+
+F Lon - NTH  SUCCEEDS
+
+A Lvp - Edi  SUCCEEDS
+
+France
+F Bre H  SUCCEEDS
+
+A Mar H  SUCCEEDS
+
+A Par H  SUCCEEDS
+
+Germany
+A Ber - Kie  SUCCEEDS
+
+F Kie - Hol  SUCCEEDS
+
+A Mun - Bur  SUCCEEDS
+
+Italy
+F Nap - ION  SUCCEEDS
+
+A Rom - Apu  SUCCEEDS
+
+A Ven H  SUCCEEDS
+
+Russia
+A Mos - Ukr  SUCCEEDS
+
+F Sev - BLA  SUCCEEDS
+
+F Stp/sc - BOT  SUCCEEDS
+
+A War - Sil  SUCCEEDS
+
+Turkey
+F Ank - Con  SUCCEEDS
+
+A Con - Bul  SUCCEEDS
+
+A Smy - Ank  SUCCEEDS
+
+Fall 1901
+Austria
+F Alb - Gre  SUCCEEDS
+
+A Gal - Bud  SUCCEEDS
+
+A Ser S Alb - Gre  SUCCEEDS
+
+England
+A Edi - Bel  FAILS (Attack strength is not greater than the prevent strength)
+
+F NTH C Edi - Bel  SUCCEEDS
+
+F NWG - Nwy  SUCCEEDS
+
+France
+F Bre - MAO  SUCCEEDS
+
+A Mar - Spa  SUCCEEDS
+
+A Par - Bur  SUCCEEDS
+
+Germany
+A Bur - Bel  SUCCEEDS
+
+F Hol S Bur - Bel  SUCCEEDS
+
+A Kie - Den  SUCCEEDS
+
+Italy
+A Apu - Ven  SUCCEEDS
+
+F ION - Tun  SUCCEEDS
+
+A Ven - Pie  SUCCEEDS
+
+Russia
+F BLA S Ukr - Rum  SUCCEEDS
+
+F BOT - Swe  SUCCEEDS
+
+A Sil - War  SUCCEEDS
+
+A Ukr - Rum  SUCCEEDS
+
+Turkey
+A Ank - Con  SUCCEEDS
+
+A Bul S Ukr - Rum  SUCCEEDS
+
+F Con - AEG  SUCCEEDS
+
+Winter 1901
+Austria
+A Tri Build  SUCCEEDS
+
+A Vie Build  SUCCEEDS
+
+England
+F Lon Build  SUCCEEDS
+
+France
+A Par Build  SUCCEEDS
+
+Germany
+A Ber Build  SUCCEEDS
+
+F Kie Build  SUCCEEDS
+
+A Mun Build  SUCCEEDS
+
+Italy
+F Nap Build  SUCCEEDS
+
+Russia
+A Mos Build  SUCCEEDS
+
+A Stp Build  SUCCEEDS
+
+Turkey
+F Smy Build  SUCCEEDS
+
+Spring 1902
+Austria
+A Bud S Ser  SUCCEEDS
+
+F Gre S AEG - ION  SUCCEEDS
+
+A Ser S Gre  SUCCEEDS
+
+A Tri S Ser  SUCCEEDS
+
+A Vie - Boh  SUCCEEDS
+
+England
+A Edi - Yor  SUCCEEDS
+
+F Lon - NTH  SUCCEEDS
+
+F NTH - HEL  SUCCEEDS
+
+F Nwy - SKA  SUCCEEDS
+
+France
+A Bur - Mar  SUCCEEDS
+
+F MAO - WES  SUCCEEDS
+
+A Par - Pic  FAILS (Attack strength is not greater than the prevent strength)
+
+A Spa S Bur - Mar  SUCCEEDS
+
+Germany
+A Bel - Pic  FAILS (Attack strength is not greater than the prevent strength)
+
+A Ber - Kie  FAILS (Attack strength is not greater than the defend strength)
+
+A Den H  SUCCEEDS
+
+F Hol - Bel  FAILS (Attack strength is not greater than the defend strength)
+
+F Kie - Hol  FAILS (Attack strength is not greater than the defend strength)
+
+A Mun - Bur  SUCCEEDS
+
+Italy
+F Nap H  SUCCEEDS
+
+A Pie H  SUCCEEDS
+
+F Tun H  SUCCEEDS
+
+A Ven H  SUCCEEDS
+
+Russia
+F BLA - Sev  SUCCEEDS
+
+A Mos - War  SUCCEEDS
+
+A Rum H  SUCCEEDS
+
+A Stp - Fin  SUCCEEDS
+
+F Swe H  SUCCEEDS
+
+A War - Sil  SUCCEEDS
+
+Turkey
+F AEG - ION  SUCCEEDS
+
+A Bul H  SUCCEEDS
+
+A Con - Ank  SUCCEEDS
+
+F Smy - AEG  SUCCEEDS
+
+Fall 1902
+Austria
+A Boh - Mun  FAILS (Attack strength is not greater than the prevent strength)
+
+A Bud S Ser  SUCCEEDS
+
+F Gre S ION  SUCCEEDS
+
+A Ser S Gre  SUCCEEDS
+
+A Tri - Ven  FAILS (Attack strength is not greater than the head to head strength)
+
+England
+F HEL - Den  SUCCEEDS
+
+F NTH S HEL - Den  SUCCEEDS
+
+F SKA S HEL - Den  SUCCEEDS
+
+A Yor S NTH  FAILS (Army can't support that territory)
+
+France
+A Mar S Par - Bur  SUCCEEDS
+
+A Par - Bur  SUCCEEDS
+
+A Spa - Por  SUCCEEDS
+
+F WES - TYS  FAILS (Attack strength is not greater than the prevent strength)
+
+Germany
+A Bel - Pic  SUCCEEDS
+
+A Ber S Bur - Mun  SUCCEEDS
+
+A Bur - Mun  FAILS (Attack strength is not greater than the prevent strength)
+   Disband  SUCCEEDS
+
+A Den S Kie  FAILS (Disrupted by attack)
+   Disband  SUCCEEDS
+
+F Hol - HEL  SUCCEEDS
+
+F Kie S Den  SUCCEEDS
+
+Italy
+F Nap - TYS  FAILS (Attack strength is not greater than the prevent strength)
+
+A Pie S Bur - Mar  FAILS (no matching move)
+
+F Tun H  SUCCEEDS
+
+A Ven - Tri  FAILS (Attack strength is not greater than the head to head strength)
+
+Russia
+A Fin H  SUCCEEDS
+
+A Rum H  SUCCEEDS
+
+F Sev S Rum  SUCCEEDS
+
+A Sil S Boh - Mun  SUCCEEDS
+
+F Swe S HEL - Den  SUCCEEDS
+
+A War - Pru  SUCCEEDS
+
+Turkey
+F AEG C Bul - Apu  SUCCEEDS
+
+A Ank - Con  SUCCEEDS
+
+A Bul - Apu  SUCCEEDS
+
+F ION C Bul - Apu  SUCCEEDS
+
+Winter 1902
+England
+F Lon Build  SUCCEEDS
+
+France
+A Bre Build  SUCCEEDS
+
+Germany
+A Mun Build  SUCCEEDS
+
+Spring 1903
+Austria
+A Boh H  SUCCEEDS
+
+A Bud H  SUCCEEDS
+
+F Gre H  SUCCEEDS
+
+A Ser H  SUCCEEDS
+
+A Tri H  SUCCEEDS
+
+England
+F Den S NTH - HEL  SUCCEEDS
+
+F Lon - NTH  SUCCEEDS
+
+F NTH - HEL  SUCCEEDS
+
+F SKA S Den  SUCCEEDS
+
+A Yor H  SUCCEEDS
+
+France
+A Bre - Par  SUCCEEDS
+
+A Bur - Bel  FAILS (Attack strength is not greater than the prevent strength)
+
+A Mar - Pie  FAILS (Attack strength is not greater than the defend strength)
+
+A Por - Spa  SUCCEEDS
+
+F WES - TYS  SUCCEEDS
+
+Germany
+A Ber S Mun  FAILS (Disrupted by attack)
+
+F HEL - Den  FAILS (Attack strength is not greater than the defend strength)
+   Retreat to Hol  SUCCEEDS
+
+F Kie S Ber  SUCCEEDS
+
+A Mun S Ber  SUCCEEDS
+
+A Pic - Bel  FAILS (Attack strength is not greater than the prevent strength)
+
+Italy
+F Nap H  SUCCEEDS
+
+A Pie - Ven  FAILS (Attack strength is not greater than the defend strength)
+
+F Tun - ION  FAILS (Attack strength is not greater than the defend strength)
+
+A Ven - Rom  FAILS (Attack strength is not greater than the prevent strength)
+
+Russia
+A Fin - Swe  SUCCEEDS
+
+A Pru S Sil - Ber  SUCCEEDS
+
+A Rum S Con - Bul  SUCCEEDS
+
+F Sev S Rum  SUCCEEDS
+
+A Sil - Ber  FAILS (Attack strength is not greater than the defend strength)
+
+F Swe - BAL  SUCCEEDS
+
+Turkey
+F AEG S ION  SUCCEEDS
+
+A Apu - Rom  FAILS (Attack strength is not greater than the prevent strength)
+
+A Con - Bul  SUCCEEDS
+
+F ION S WES - TYS  FAILS (Disrupted by attack)
+
+Fall 1903
+Austria
+A Boh - Tyr  SUCCEEDS
+
+A Bud S Ser  SUCCEEDS
+
+F Gre S Bul  SUCCEEDS
+
+A Ser S Gre  SUCCEEDS
+
+A Tri - Ven  FAILS (Attack strength is not greater than the defend strength)
+
+England
+F Den H  SUCCEEDS
+
+F HEL H  SUCCEEDS
+
+F NTH H  SUCCEEDS
+
+F SKA H  SUCCEEDS
+
+A Yor H  SUCCEEDS
+
+France
+A Bur - Bel  FAILS (Attack strength is not greater than the prevent strength)
+
+A Mar - Pie  SUCCEEDS
+
+A Par H  SUCCEEDS
+
+A Spa - Gas  SUCCEEDS
+
+F TYS S Apu - Nap  SUCCEEDS
+
+Germany
+A Ber S Mun  FAILS (Disrupted by attack)
+
+F Hol - Bel  FAILS (Attack strength is not greater than the prevent strength)
+
+F Kie - BAL  FAILS (Attack strength is not greater than the defend strength)
+
+A Mun S Ber  SUCCEEDS
+
+A Pic - Bre  SUCCEEDS
+
+Italy
+F Nap - Rom  SUCCEEDS
+
+A Pie - Tus  SUCCEEDS
+
+F Tun - ION  FAILS (Attack strength is not greater than the defend strength)
+
+A Ven S Nap - Rom  FAILS (Disrupted by attack)
+
+Russia
+F BAL S Pru - Ber  FAILS (Disrupted by attack)
+
+A Pru - Ber  FAILS (Attack strength is not greater than the defend strength)
+
+A Rum H  SUCCEEDS
+
+F Sev S Rum  SUCCEEDS
+
+A Sil S Pru - Ber  SUCCEEDS
+
+A Swe H  SUCCEEDS
+
+Turkey
+F AEG S ION  SUCCEEDS
+
+A Apu - Nap  SUCCEEDS
+
+A Bul S Ser  SUCCEEDS
+
+F ION S Apu - Nap  FAILS (Disrupted by attack)
+
+Winter 1903
+France
+A Pie Disband  SUCCEEDS
+
+Italy
+F Tun Disband  SUCCEEDS
+
+Turkey
+A Con Build  SUCCEEDS
+
+Spring 1904
+Austria
+A Bud H  SUCCEEDS
+
+F Gre H  SUCCEEDS
+
+A Ser H  SUCCEEDS
+
+A Tri H  SUCCEEDS
+
+A Tyr H  SUCCEEDS
+
+England
+F Den H  SUCCEEDS
+
+F HEL H  SUCCEEDS
+
+F NTH H  SUCCEEDS
+
+F SKA H  SUCCEEDS
+
+A Yor H  SUCCEEDS
+
+France
+A Bur - Bel  FAILS (Attack strength is not greater than the prevent strength)
+
+A Gas S Par - Bre  SUCCEEDS
+
+A Par - Bre  SUCCEEDS
+
+F TYS - Tun  SUCCEEDS
+
+Germany
+A Ber S Kie  FAILS (Disrupted by attack)
+
+A Bre - Par  FAILS (Attack strength is not greater than the head to head strength)
+   Retreat to Pic  SUCCEEDS
+
+F Hol - Bel  FAILS (Attack strength is not greater than the prevent strength)
+
+F Kie S Ber  SUCCEEDS
+
+A Mun - Sil  FAILS (Attack strength is not greater than the defend strength)
+
+Italy
+F Rom H  SUCCEEDS
+
+A Tus - Pie  SUCCEEDS
+
+A Ven S Rom  SUCCEEDS
+
+Russia
+F BAL S Pru - Ber  SUCCEEDS
+
+A Pru - Ber  FAILS (Attack strength is not greater than the defend strength)
+
+A Rum H  SUCCEEDS
+
+F Sev S Rum  SUCCEEDS
+
+A Sil S Pru - Ber  FAILS (Disrupted by attack)
+
+A Swe - Nwy  SUCCEEDS
+
+Turkey
+F AEG C Con - Apu  SUCCEEDS
+
+A Bul H  SUCCEEDS
+
+A Con - Apu  SUCCEEDS
+
+F ION C Con - Apu  SUCCEEDS
+
+A Nap - Rom  FAILS (Attack strength is not greater than the defend strength)
+
+Fall 1904
+Austria
+A Bud S Ser  SUCCEEDS
+
+F Gre H  SUCCEEDS
+
+A Ser S Gre  SUCCEEDS
+
+A Tri S Tyr - Ven  SUCCEEDS
+
+A Tyr - Ven  SUCCEEDS
+
+England
+F Den H  SUCCEEDS
+
+F HEL H  SUCCEEDS
+
+F NTH H  SUCCEEDS
+
+F SKA H  SUCCEEDS
+
+A Yor H  SUCCEEDS
+
+France
+A Bre H  SUCCEEDS
+
+A Bur - Par  SUCCEEDS
+
+A Gas - Mar  FAILS (Attack strength is not greater than the prevent strength)
+
+F Tun H  SUCCEEDS
+
+Germany
+A Ber H  SUCCEEDS
+
+F Hol - Kie  FAILS (Attack strength is not greater than the defend strength)
+
+F Kie S Ber  SUCCEEDS
+
+A Mun S Ber  SUCCEEDS
+
+A Pic - Bel  SUCCEEDS
+
+Italy
+A Pie - Mar  FAILS (Attack strength is not greater than the prevent strength)
+
+F Rom H  FAILS (Insufficient hold strength)
+   Retreat to TYS  SUCCEEDS
+
+A Ven S Rom  FAILS (Disrupted by attack)
+   Retreat to Tus  SUCCEEDS
+
+Russia
+F BAL - Swe  SUCCEEDS
+
+A Nwy H  SUCCEEDS
+
+A Pru H  SUCCEEDS
+
+A Rum - Gal  SUCCEEDS
+
+F Sev - Rum  SUCCEEDS
+
+A Sil - Boh  SUCCEEDS
+
+Turkey
+F AEG - Gre  FAILS (Attack strength is not greater than the defend strength)
+
+A Apu - Rom  SUCCEEDS
+
+A Bul S AEG - Gre  SUCCEEDS
+
+F ION - ADR  SUCCEEDS
+
+A Nap S Apu - Rom  SUCCEEDS
+
+Winter 1904
+Austria
+A Vie Build  SUCCEEDS
+
+England
+F Den Disband  SUCCEEDS
+
+France
+F Mar Build  SUCCEEDS
+
+Italy
+F TYS Disband  SUCCEEDS
+
+A Pie Disband  SUCCEEDS
+
+A Tus Disband  SUCCEEDS
+
+Russia
+F Stp/nc Build  SUCCEEDS
+
+Turkey
+F Con Build  SUCCEEDS
+
+Spring 1905
+Austria
+A Bud S Vie  SUCCEEDS
+
+F Gre H  SUCCEEDS
+
+A Ser S Gre  SUCCEEDS
+
+A Tri - Tyr  SUCCEEDS
+
+A Ven S Rom - Tus  SUCCEEDS
+
+A Vie S Tri - Tyr  SUCCEEDS
+
+England
+F HEL H  FAILS (Insufficient hold strength)
+   Disband  SUCCEEDS
+
+F NTH H  SUCCEEDS
+
+F SKA H  SUCCEEDS
+
+A Yor H  SUCCEEDS
+
+France
+A Bre - Pic  SUCCEEDS
+
+A Gas S Par - Bur  SUCCEEDS
+
+F Mar - LYO  SUCCEEDS
+
+A Par - Bur  SUCCEEDS
+
+F Tun H  SUCCEEDS
+
+Germany
+A Bel S Hol  SUCCEEDS
+
+A Ber - Pru  FAILS (Attack strength is not greater than the defend strength)
+
+F Hol S Kie - HEL  SUCCEEDS
+
+F Kie - HEL  SUCCEEDS
+
+A Mun - Boh  FAILS (Attack strength is not greater than the defend strength)
+
+Russia
+A Boh S Gal  FAILS (Disrupted by attack)
+
+A Gal S Rum  SUCCEEDS
+
+A Nwy - Swe  SUCCEEDS
+
+A Pru H  SUCCEEDS
+
+F Rum H  SUCCEEDS
+
+F Stp/nc - Nwy  SUCCEEDS
+
+F Swe - BAL  SUCCEEDS
+
+Turkey
+F ADR - ION  SUCCEEDS
+
+F AEG S ADR - ION  SUCCEEDS
+
+A Bul H  SUCCEEDS
+
+F Con S Bul  SUCCEEDS
+
+A Nap - Rom  SUCCEEDS
+
+A Rom - Tus  SUCCEEDS
+
+Fall 1905
+Austria
+A Bud H  SUCCEEDS
+
+F Gre H  SUCCEEDS
+
+A Ser H  SUCCEEDS
+
+A Tyr H  SUCCEEDS
+
+A Ven H  SUCCEEDS
+
+A Vie H  SUCCEEDS
+
+England
+F NTH H  SUCCEEDS
+
+F SKA H  SUCCEEDS
+
+A Yor H  SUCCEEDS
+
+France
+A Bur S Pic - Bel  SUCCEEDS
+
+A Gas - Mar  SUCCEEDS
+
+F LYO - TYS  SUCCEEDS
+
+A Pic - Bel  FAILS (Attack strength is not greater than the defend strength)
+
+F Tun S LYO - TYS  SUCCEEDS
+
+Germany
+A Bel S Hol  FAILS (Disrupted by attack)
+
+A Ber S Mun  FAILS (Disrupted by attack)
+
+F HEL - Den  FAILS (Attack strength is not greater than the prevent strength)
+
+F Hol S Bel  SUCCEEDS
+
+A Mun S Ber  SUCCEEDS
+
+Russia
+F BAL S Pru - Ber  SUCCEEDS
+
+A Boh S Tyr - Mun  FAILS (no matching move)
+
+A Gal - Rum  SUCCEEDS
+
+F Nwy S NTH  SUCCEEDS
+
+A Pru - Ber  FAILS (Attack strength is not greater than the defend strength)
+
+F Rum - BLA  SUCCEEDS
+
+A Swe - Den  FAILS (Attack strength is not greater than the prevent strength)
+
+Turkey
+F AEG S Bul  SUCCEEDS
+
+A Bul H  SUCCEEDS
+
+F Con S Bul  SUCCEEDS
+
+F ION - Nap  SUCCEEDS
+
+A Rom H  SUCCEEDS
+
+A Tus H  SUCCEEDS
+
+Winter 1905
+France
+F Bre Build  SUCCEEDS
+
+Spring 1906
+Austria
+A Bud S Ser  SUCCEEDS
+
+F Gre H  SUCCEEDS
+
+A Ser S Gre  SUCCEEDS
+
+A Tyr - Mun  FAILS (Attack strength is not greater than the prevent strength)
+
+A Ven H  SUCCEEDS
+
+A Vie H  SUCCEEDS
+
+England
+F NTH H  SUCCEEDS
+
+F SKA H  SUCCEEDS
+
+A Yor H  SUCCEEDS
+
+France
+F Bre - ENG  SUCCEEDS
+
+A Bur S Pic - Bel  SUCCEEDS
+
+A Mar S Bur  SUCCEEDS
+
+A Pic - Bel  FAILS (Attack strength is not greater than the defend strength)
+
+F Tun - ION  SUCCEEDS
+
+F TYS S Tun - ION  SUCCEEDS
+
+Germany
+A Bel S Hol  FAILS (Disrupted by attack)
+
+A Ber S Mun  FAILS (Disrupted by attack)
+   Retreat to Sil  SUCCEEDS
+
+F HEL - Den  FAILS (Attack strength is not greater than the prevent strength)
+
+F Hol S Bel  SUCCEEDS
+
+A Mun S Ber  FAILS (Disrupted by attack)
+
+Russia
+F BAL S Pru - Ber  SUCCEEDS
+
+F BLA S Rum  SUCCEEDS
+
+A Boh - Mun  FAILS (Attack strength is not greater than the prevent strength)
+
+F Nwy - NWG  SUCCEEDS
+
+A Pru - Ber  SUCCEEDS
+
+A Rum H  SUCCEEDS
+
+A Swe - Den  FAILS (Attack strength is not greater than the prevent strength)
+
+Turkey
+F AEG - Con  SUCCEEDS
+
+A Bul S AEG - Con  SUCCEEDS
+
+F Con - Ank  SUCCEEDS
+
+F Nap S Rom  SUCCEEDS
+
+A Rom S Tus  SUCCEEDS
+
+A Tus S Rom  SUCCEEDS
+
+Fall 1906
+Austria
+A Bud S Bul - Rum  SUCCEEDS
+
+F Gre H  SUCCEEDS
+
+A Ser S Bul - Rum  SUCCEEDS
+
+A Tyr - Mun  SUCCEEDS
+
+A Ven H  SUCCEEDS
+
+A Vie - Tyr  SUCCEEDS
+
+England
+F NTH H  SUCCEEDS
+
+F SKA H  SUCCEEDS
+
+A Yor H  SUCCEEDS
+
+France
+A Bur S Pic - Bel  SUCCEEDS
+
+F ENG - Lon  SUCCEEDS
+
+F ION H  SUCCEEDS
+
+A Mar - Pie  FAILS (Attack strength is not greater than the prevent strength)
+
+A Pic - Bel  FAILS (Attack strength is not greater than the defend strength)
+
+F TYS S ION  SUCCEEDS
+
+Germany
+A Bel S Hol  FAILS (Disrupted by attack)
+
+F HEL - Kie  SUCCEEDS
+
+F Hol S Bel  SUCCEEDS
+
+A Mun S HEL - Kie  FAILS (Disrupted by attack)
+   Retreat to Sil  SUCCEEDS
+
+A Sil - War  SUCCEEDS
+
+Russia
+F BAL S Swe - Den  SUCCEEDS
+
+A Ber H  SUCCEEDS
+
+F BLA S Rum  FAILS (Disrupted by attack)
+   Retreat to Bul  SUCCEEDS
+
+A Boh S Tyr - Mun  SUCCEEDS
+
+F NWG - Edi  SUCCEEDS
+
+A Rum H  FAILS (Insufficient hold strength)
+   Retreat to Gal  SUCCEEDS
+
+A Swe - Den  SUCCEEDS
+
+Turkey
+F Ank S Con - BLA  SUCCEEDS
+
+A Bul - Rum  SUCCEEDS
+
+F Con - BLA  SUCCEEDS
+
+F Nap H  SUCCEEDS
+
+A Rom S Nap  SUCCEEDS
+
+A Tus - Pie  FAILS (Attack strength is not greater than the prevent strength)
+
+Winter 1906
+Austria
+A Vie Build  SUCCEEDS
+
+England
+F SKA Disband  SUCCEEDS
+
+F NTH Disband  SUCCEEDS
+
+France
+F Bre Build  SUCCEEDS
+
+Germany
+F Kie Disband  SUCCEEDS
+
+Russia
+A Sev Build  SUCCEEDS
+
+A Mos Build  SUCCEEDS
+
+Spring 1907
+Austria
+A Bud S Rum  SUCCEEDS
+
+F Gre S BLA - Bul/sc  FAILS (no matching move)
+
+A Mun S Tyr - Boh  SUCCEEDS
+
+A Ser S Rum  SUCCEEDS
+
+A Tyr - Boh  SUCCEEDS
+
+A Ven H  SUCCEEDS
+
+A Vie S Tyr - Boh  SUCCEEDS
+
+England
+A Yor H  SUCCEEDS
+
+France
+F Bre - ENG  SUCCEEDS
+
+A Bur H  SUCCEEDS
+
+F ION - AEG  SUCCEEDS
+
+F Lon - Wal  SUCCEEDS
+
+A Mar - Pie  SUCCEEDS
+
+A Pic S Bur  SUCCEEDS
+
+F TYS - Nap  FAILS (Attack strength is not greater than the defend strength)
+
+Germany
+A Bel - Bur  FAILS (Attack strength is not greater than the defend strength)
+
+F Hol - Kie  FAILS (Attack strength is not greater than the prevent strength)
+
+A Sil - Ber  FAILS (Attack strength is not greater than the defend strength)
+
+A War - Mos  FAILS (Attack strength is not greater than the defend strength)
+
+Russia
+F BAL S Den - Kie  SUCCEEDS
+
+A Ber S Boh - Mun  FAILS (Disrupted by attack)
+
+A Boh - Mun  FAILS (Attack strength is not greater than the defend strength)
+   Disband  SUCCEEDS
+
+F Bul/ec - Rum  FAILS (Attack strength is not greater than the defend strength)
+
+A Den - Kie  SUCCEEDS
+
+F Edi - NTH  SUCCEEDS
+
+A Gal S Bul/ec - Rum  SUCCEEDS
+
+A Mos H  SUCCEEDS
+
+A Sev S Bul/ec - Rum  SUCCEEDS
+
+Turkey
+F Ank - Con  SUCCEEDS
+
+F BLA - Bul/ec  FAILS (Attack strength is not greater than the defend strength)
+
+F Nap H  SUCCEEDS
+
+A Rom S Nap  SUCCEEDS
+
+A Rum H  SUCCEEDS
+
+A Tus S Rom  SUCCEEDS
+
+Fall 1907
+Austria
+A Boh S Mun  SUCCEEDS
+
+A Bud S Rum  SUCCEEDS
+
+F Gre S BLA - Bul/ec  SUCCEEDS
+
+A Mun S Hol - Kie  FAILS (no matching move)
+
+A Ser S Rum  SUCCEEDS
+
+A Ven H  SUCCEEDS
+
+A Vie S Bud  SUCCEEDS
+
+England
+A Yor H  SUCCEEDS
+
+France
+F AEG S Bul/ec - Con  SUCCEEDS
+
+A Bur - Ruh  SUCCEEDS
+
+F ENG S Pic - Bel  SUCCEEDS
+
+A Pic - Bel  SUCCEEDS
+
+A Pie - Tyr  SUCCEEDS
+
+F TYS - ION  FAILS (Attack strength is not greater than the prevent strength)
+
+F Wal - Lvp  SUCCEEDS
+
+Germany
+A Bel S Hol  FAILS (Disrupted by attack)
+   Retreat to Bur  SUCCEEDS
+
+F Hol S Bel  FAILS (Disrupted by attack)
+   Retreat to HEL  SUCCEEDS
+
+A Sil S War  SUCCEEDS
+
+A War S Sil  SUCCEEDS
+
+Russia
+F BAL S Ber  SUCCEEDS
+
+A Ber H  SUCCEEDS
+
+F Bul/ec - Con  SUCCEEDS
+
+A Gal - Rum  FAILS (Attack strength is not greater than the defend strength)
+
+A Kie S NTH - Hol  SUCCEEDS
+
+A Mos S Sev  SUCCEEDS
+
+F NTH - Hol  SUCCEEDS
+
+A Sev S Gal - Rum  SUCCEEDS
+
+Turkey
+F BLA - Bul/ec  SUCCEEDS
+
+F Con - Smy  SUCCEEDS
+
+F Nap - ION  FAILS (Attack strength is not greater than the prevent strength)
+
+A Rom - Nap  FAILS (Attack strength is not greater than the defend strength)
+
+A Rum S BLA - Bul/ec  FAILS (Disrupted by attack)
+
+A Tus - Rom  FAILS (Attack strength is not greater than the defend strength)
+
+Winter 1907
+England
+A Yor Disband  SUCCEEDS
+
+France
+A Mar Build  SUCCEEDS
+
+A Par Build  SUCCEEDS
+
+Germany
+F HEL Disband  SUCCEEDS
+
+A Sil Disband  SUCCEEDS
+
+A War Disband  SUCCEEDS
+
+Russia
+A Stp Build  SUCCEEDS
+
+Spring 1908
+Austria
+A Boh - Tyr  SUCCEEDS
+
+A Bud - Tri  FAILS (Attack strength is not greater than the prevent strength)
+
+F Gre S Bul/ec  FAILS (no matching hold)
+
+A Mun S Boh - Tyr  FAILS (Disrupted by attack)
+   Retreat to Boh  SUCCEEDS
+
+A Ser S Rum  FAILS (no matching hold)
+
+A Ven - Tri  FAILS (Attack strength is not greater than the prevent strength)
+
+A Vie S Boh - Tyr  SUCCEEDS
+
+France
+F AEG - ION  SUCCEEDS
+
+A Bel H  SUCCEEDS
+
+F ENG - MAO  SUCCEEDS
+
+F Lvp - IRI  SUCCEEDS
+
+A Mar H  SUCCEEDS
+
+A Par H  SUCCEEDS
+
+A Ruh - Mun  SUCCEEDS
+
+A Tyr S Ruh - Mun  FAILS (Disrupted by attack)
+   Disband  SUCCEEDS
+
+F TYS S AEG - ION  SUCCEEDS
+
+Germany
+A Bur - Mun  FAILS (Attack strength is not greater than the prevent strength)
+
+Russia
+F BAL - Den  SUCCEEDS
+
+A Ber S Ruh - Mun  SUCCEEDS
+
+F Con - Bul/ec  FAILS (Attack strength is not greater than the prevent strength)
+
+A Gal - Rum  SUCCEEDS
+
+F Hol H  SUCCEEDS
+
+A Kie S Ruh - Mun  SUCCEEDS
+
+A Mos - War  SUCCEEDS
+
+A Sev S Gal - Rum  SUCCEEDS
+
+A Stp - Lvn  SUCCEEDS
+
+Turkey
+F Bul/ec - Con  FAILS (Attack strength is not greater than the head to head strength)
+
+F Nap H  SUCCEEDS
+
+A Rom H  SUCCEEDS
+
+A Rum - Bul  FAILS (Attack strength is not greater than the prevent strength)
+   Retreat to Ukr  SUCCEEDS
+
+F Smy - Ank  FAILS (illegal move, not adjacent to water or coast)
+
+A Tus - Pie  SUCCEEDS
