@@ -1103,6 +1103,15 @@ function renderGlobalOverview(payload) {
     ? formatSeason(payload.selectedSeason.year, payload.selectedSeason.season)
     : 'the current board';
   const drawChance = round(Number(payload.forecastDetails?.draw_probability ?? 0) * 100, 0);
+  const mostAtRisk = countries
+    .map(([country]) => ({
+      country,
+      value: Number(payload.forecastDetails?.countries?.[country]?.elimination_probability ?? 0),
+    }))
+    .sort((a, b) => b.value - a.value)[0];
+  const survivalRisk = mostAtRisk?.value
+    ? `${mostAtRisk.country} faces the highest elimination risk at ${round(mostAtRisk.value * 100, 0)}%.`
+    : 'No power is projected to be eliminated within the current horizon.';
 
   overviewFactors.innerHTML = `
     <div class="overview-factor">
@@ -1126,7 +1135,7 @@ function renderGlobalOverview(payload) {
   stageReport.innerHTML = `
     <p>${leader.country} holds the present material lead with ${leader.sc} supply centers and ${leader.units} units. ${strongestTrajectory.country} has accumulated ${formatNumber(strongestTrajectory.value)} momentum through ${selectedLabel}, making ${strongestTrajectory.country === leader.country ? 'that lead' : 'its long-term trajectory'} the clearest strategic signal.</p>
     <p>${postures.length ? `${postures.join('; ')}. ` : ''}${mostPressed.country} has the broadest active perimeter across ${mostPressed.value} fronts. ${mostExposed?.value ? `${mostExposed.country} has ${mostExposed.value} supply ${mostExposed.value === 1 ? 'center' : 'centers'} under direct pressure without adjacent cover.` : 'No supply center is currently under direct pressure without friendly cover.'}</p>
-    <p>${fragileCountries.map((entry) => `${entry.country} (${formatNumber(entry.risk)})`).join(' and ')} carry the highest combined positional risk. The current projection assigns a ${drawChance}% chance to operational stalemate before the forecast horizon; center conversion, Winter material adjustments, and threatened-center coverage are the key variables that can break it.</p>
+    <p>${fragileCountries.map((entry) => `${entry.country} (${formatNumber(entry.risk)})`).join(' and ')} carry the highest combined positional risk. The current projection assigns a ${drawChance}% chance to operational stalemate before the forecast horizon. ${survivalRisk}</p>
   `;
 }
 
@@ -1261,7 +1270,7 @@ function renderCountryFocus(country, payload) {
     : 'every directly threatened supply center has adjacent friendly cover';
   const projection = payload?.forecastDetails?.countries?.[country];
   const forecastText = projection
-    ? `Across the current simulation horizon, it averages ${formatNumber(projection.expected_scs, 1)} SCs with a ${round(Number(projection.solo_probability ?? 0) * 100, 0)}% solo chance.`
+    ? `Across the current simulation horizon, it averages ${formatNumber(projection.expected_scs, 1)} SCs and ${formatNumber(projection.expected_units, 1)} units, with an expected rank of ${formatNumber(projection.expected_rank, 1)} and a ${round(Number(projection.solo_probability ?? 0) * 100, 0)}% solo chance.${Number(projection.home_center_loss_probability ?? 0) ? ` Home-center loss appears in ${round(Number(projection.home_center_loss_probability) * 100, 0)}% of trials.` : ''}${Number(projection.elimination_probability ?? 0) ? ` Elimination risk is ${round(Number(projection.elimination_probability) * 100, 0)}%.` : ''}`
     : '';
   const brief = `${country} ${summary}, ${current.solo_distance ?? 18} centers from a solo, and ${momentumText}. Orders converted at ${round(Number(current.order_success_rate ?? 0) * 100, 0)}%; ${centerRisk}. ${winterText === 'Even' ? 'Its current force matches its center count for Winter.' : `The current material balance allows ${winterText} in Winter.`} ${forecastText}`;
   document.getElementById('country-brief').textContent = brief;

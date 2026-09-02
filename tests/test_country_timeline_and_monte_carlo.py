@@ -216,6 +216,56 @@ class CountryTimelineAndMonteCarloTests(unittest.TestCase):
         self.assertEqual(result.state.units_by_province["Bel"].country, "France")
         self.assertEqual(result.dislodged_units["Bel"].country, "England")
 
+    def test_retreat_resolver_preserves_dislodged_unit_in_legal_province(self):
+        simulation = SimulationState(
+            1902,
+            "Spring",
+            {
+                "Bur": SimulatedUnit("France", "A", "Bur"),
+                "Pic": SimulatedUnit("France", "A", "Pic"),
+                "Bel": SimulatedUnit("England", "A", "Bel"),
+            },
+            {"Hol": "England"},
+        )
+        engine = MonteCarloEngine(seed=1)
+        movement = engine.resolve_movement(simulation, [
+            {"action": "MOVE", "from": "Bur", "to": "Bel"},
+            {"action": "SUPPORT", "from": "Pic", "support_from": "Bur", "support_to": "Bel"},
+        ])
+        england = CountryState("England")
+        england.posture = "Defensive"
+
+        retreat = engine.resolve_retreats(movement, {"England": england, "France": CountryState("France")})
+
+        self.assertEqual(retreat.successful_retreats, {"Bel": "Hol"})
+        self.assertEqual(retreat.state.units_by_province["Hol"].country, "England")
+        self.assertEqual(retreat.state.units_by_province["Bel"].country, "France")
+
+    def test_turn_generator_converts_hold_into_support_for_friendly_attack(self):
+        simulation = SimulationState(
+            1902,
+            "Spring",
+            {
+                "Bur": SimulatedUnit("France", "A", "Bur"),
+                "Pic": SimulatedUnit("France", "A", "Pic"),
+            },
+            {"Bel": "England"},
+        )
+        engine = MonteCarloEngine(seed=1)
+        engine.choose_unit_intent = lambda state, country, unit: (
+            {"action": "MOVE", "from": "Bur", "to": "Bel", "weight": 1.0}
+            if unit.province == "Bur"
+            else {"action": "HOLD", "from": "Pic", "weight": 0.05}
+        )
+        engine.random.uniform = lambda start, end: end
+
+        intents = engine.generate_turn_intents(simulation, {"France": CountryState("France")})
+        support = next(intent for intent in intents if intent["from"] == "Pic")
+
+        self.assertEqual(support["action"], "SUPPORT")
+        self.assertEqual(support["support_from"], "Bur")
+        self.assertEqual(support["support_to"], "Bel")
+
     def test_resolver_cuts_support_when_enemy_attacks_supporter(self):
         simulation = SimulationState(
             1902,
@@ -300,7 +350,7 @@ class CountryTimelineAndMonteCarloTests(unittest.TestCase):
         game = GameState(1902, "Spring")
         game.add_country_state(CountryState("England"))
         game.board.add_unit(SimulatedUnit("England", "A", "Lon"))
-        game.board.sc_owners["Lon"] = "England"
+        game.board.sc_owners.update({"Lon": "England", "Edi": "England", "Lvp": "England"})
         engine = MonteCarloEngine(seed=1)
         engine.generate_turn_intents = lambda state, countries: [
             {"action": "HOLD", "from": province}
@@ -335,7 +385,7 @@ class CountryTimelineAndMonteCarloTests(unittest.TestCase):
         game = GameState(1902, "Spring")
         game.add_country_state(CountryState("England"))
         game.board.add_unit(SimulatedUnit("England", "A", "Lon"))
-        game.board.sc_owners["Lon"] = "England"
+        game.board.sc_owners.update({"Lon": "England", "Edi": "England", "Lvp": "England"})
         engine = MonteCarloEngine(seed=1)
         engine.generate_turn_intents = lambda state, countries: [
             {"action": "HOLD", "from": province}
@@ -347,8 +397,11 @@ class CountryTimelineAndMonteCarloTests(unittest.TestCase):
         self.assertEqual(forecast["draw_probability"], 1.0)
         self.assertEqual(forecast["terminal_reasons"]["stalemate"], 4)
         self.assertEqual(forecast["countries"]["England"]["win_probability"], 0.0)
-        self.assertEqual(forecast["countries"]["England"]["expected_scs"], 1.0)
-        self.assertEqual(forecast["countries"]["England"]["expected_units"], 1.0)
+        self.assertEqual(forecast["countries"]["England"]["expected_scs"], 3.0)
+        self.assertEqual(forecast["countries"]["England"]["expected_units"], 3.0)
+        self.assertEqual(forecast["countries"]["England"]["expected_rank"], 1.0)
+        self.assertEqual(forecast["countries"]["England"]["elimination_probability"], 0.0)
+        self.assertEqual(forecast["countries"]["England"]["home_center_loss_probability"], 0.0)
 
 
 if __name__ == "__main__":

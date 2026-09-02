@@ -65,6 +65,7 @@ class MovementResolution:
     successful_moves: set
     bounced_moves: set
     dislodged_units: dict
+    dislodged_by: dict
     cut_supports: set
 
 
@@ -75,6 +76,14 @@ class WinterResolution:
     removals: list
     unfilled_builds: dict
     unfilled_removals: dict
+
+
+@dataclass
+class RetreatResolution:
+    state: SimulationState
+    successful_retreats: dict
+    disbanded_units: dict
+    contested_destinations: set
 
 
 @dataclass
@@ -255,7 +264,67 @@ class MonteCarloEngine:
             successful_moves=successful_moves,
             bounced_moves=bounced_moves,
             dislodged_units=dislodged_units,
+            dislodged_by={
+                destination: origin
+                for origin in successful_moves
+                for destination in [moves[origin]["to"]]
+                if destination in dislodged_units
+            },
             cut_supports=cut_supports,
+        )
+
+    def resolve_retreats(self, movement_resolution, country_states):
+        """Retreat dislodged units to unoccupied legal provinces or disband them."""
+        state = movement_resolution.state.copy()
+        proposed_retreats = {}
+        for origin, unit in movement_resolution.dislodged_units.items():
+            attacker_origin = movement_resolution.dislodged_by.get(origin)
+            country_state = country_states.get(unit.country)
+            weights = self._policy_weights(country_state) if country_state else {"defend_center": 1.0, "risk": 0.5}
+            candidates = [
+                province for province in get_legal_neighbors_for_unit(origin, unit.unit_type)
+                if province != attacker_origin and province not in state.units_by_province
+            ]
+            if not candidates:
+                continue
+
+            scored = []
+            for province in candidates:
+                owner = state.sc_owners.get(province)
+                score = self.random.random() * 0.2
+                if owner == unit.country:
+                    score += weights["defend_center"]
+                elif owner not in (None, "", "Neutral"):
+                    score += weights["risk"]
+                scored.append((score, province))
+            proposed_retreats[origin] = max(scored)[1]
+
+        destinations = {}
+        for origin, destination in proposed_retreats.items():
+            destinations.setdefault(destination, []).append(origin)
+        contested_destinations = {
+            destination for destination, origins in destinations.items()
+            if len(origins) > 1
+        }
+        successful_retreats = {}
+        disbanded_units = {}
+        for origin, unit in movement_resolution.dislodged_units.items():
+            destination = proposed_retreats.get(origin)
+            if not destination or destination in contested_destinations:
+                disbanded_units[origin] = unit
+                continue
+            state.units_by_province[destination] = SimulatedUnit(
+                unit.country,
+                unit.unit_type,
+                destination,
+            )
+            successful_retreats[origin] = destination
+
+        return RetreatResolution(
+            state=state,
+            successful_retreats=successful_retreats,
+            disbanded_units=disbanded_units,
+            contested_destinations=contested_destinations,
         )
 
     def resolve_winter(self, simulation_state, adjustments=None):
@@ -362,12 +431,44 @@ class MonteCarloEngine:
         )
 
     def generate_turn_intents(self, simulation_state, country_states):
-        """Select one posture-weighted intent for every unit on the simulation board."""
-        return [
+        """Select baseline intents, then coordinate holds into supporting orders."""
+        intents = [
             self.choose_unit_intent(simulation_state, country_states[unit.country], unit)
             for unit in simulation_state.units_by_province.values()
             if unit.country in country_states
         ]
+        intents_by_origin = {intent["from"]: intent for intent in intents}
+        for province, unit in simulation_state.units_by_province.items():
+            if intents_by_origin.get(province, {}).get("action") != "HOLD":
+                continue
+            policy = self._policy_weights(country_states[unit.country])
+            support_options = []
+            for supported_origin, supported_intent in intents_by_origin.items():
+                supported_unit = simulation_state.units_by_province[supported_origin]
+                if supported_unit.country != unit.country or supported_origin == province:
+                    continue
+                target = supported_intent.get("to") if supported_intent.get("action") == "MOVE" else supported_origin
+                if target not in get_legal_neighbors_for_unit(province, unit.unit_type):
+                    continue
+                weight = policy["defend_center"] if target == supported_origin else policy["attack_enemy"]
+                support_options.append({
+                    "action": "SUPPORT",
+                    "from": province,
+                    "support_from": supported_origin,
+                    "support_to": target,
+                    "weight": weight,
+                })
+            if support_options:
+                hold_weight = max(0.05, intents_by_origin[province].get("weight", policy["hold"]))
+                options = [{**intents_by_origin[province], "weight": hold_weight}] + support_options
+                total_weight = sum(option["weight"] for option in options)
+                roll = self.random.uniform(0, total_weight)
+                for option in options:
+                    roll -= option["weight"]
+                    if roll <= 0:
+                        intents_by_origin[province] = option
+                        break
+        return list(intents_by_origin.values())
 
     def capture_fall_supply_centers(self, simulation_state):
         """Apply Fall supply-center ownership changes and return whether any changed."""
@@ -407,7 +508,8 @@ class MonteCarloEngine:
             intents_by_origin = {intent["from"]: intent for intent in intents}
             movement_before = state
             resolution = self.resolve_movement(state, intents)
-            state = resolution.state
+            retreat_resolution = self.resolve_retreats(resolution, country_states)
+            state = retreat_resolution.state
             movement_seasons += 1
 
             aggressive_success = any(
@@ -476,6 +578,9 @@ class MonteCarloEngine:
         horizon_leads = {country: 0 for country in countries}
         expected_scs = {country: 0 for country in countries}
         expected_units = {country: 0 for country in countries}
+        rank_totals = {country: 0 for country in countries}
+        elimination_counts = {country: 0 for country in countries}
+        home_center_loss_counts = {country: 0 for country in countries}
         terminal_reasons = {"solo": 0, "stalemate": 0, "horizon": 0}
 
         for _ in range(iterations):
@@ -494,6 +599,31 @@ class MonteCarloEngine:
                     unit.country == country
                     for unit in result.state.units_by_province.values()
                 )
+                home_centers = {
+                    province for province, owner in STARTING_SUPPLY_CENTERS.items()
+                    if owner == country
+                }
+                if home_centers and any(
+                    result.state.sc_owners.get(province) != country
+                    for province in home_centers
+                ):
+                    home_center_loss_counts[country] += 1
+
+            ranked_countries = sorted(
+                countries,
+                key=lambda country: (
+                    -sum(owner == country for owner in result.state.sc_owners.values()),
+                    -sum(unit.country == country for unit in result.state.units_by_province.values()),
+                    country,
+                ),
+            )
+            for rank, country in enumerate(ranked_countries, start=1):
+                rank_totals[country] += rank
+                if (
+                    not any(owner == country for owner in result.state.sc_owners.values())
+                    or not any(unit.country == country for unit in result.state.units_by_province.values())
+                ):
+                    elimination_counts[country] += 1
 
         return {
             "countries": {
@@ -503,6 +633,9 @@ class MonteCarloEngine:
                     "horizon_lead_probability": horizon_leads[country] / iterations,
                     "expected_scs": expected_scs[country] / iterations,
                     "expected_units": expected_units[country] / iterations,
+                    "expected_rank": rank_totals[country] / iterations,
+                    "elimination_probability": elimination_counts[country] / iterations,
+                    "home_center_loss_probability": home_center_loss_counts[country] / iterations,
                 }
                 for country in countries
             },
